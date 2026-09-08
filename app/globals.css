@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -23,4 +23,81 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+} */
+
+@plugin "daisyui" {
+  themes: false;
+}
+
+@plugin "daisyui/theme" {
+  name: "bytemepastel";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #fbfaff; /* page background */
+  --color-base-200: #ffffff; /* card background */
+  --color-base-300: #f1eefa; /* chips / muted surfaces */
+  --color-base-content: #2e2a38; /* body text */
+
+  --color-primary: #c9b6ff; /* pastel purple */
+  --color-primary-content: #2e2a38;
+  --color-secondary: #ffd1dc; /* pastel pink */
+  --color-secondary-content: #7a4b57;
+  --color-accent: #c6f1d6; /* pastel mint */
+  --color-accent-content: #1f4a31;
+  --color-neutral: #8b84a0; /* muted purple-grey */
+  --color-neutral-content: #fbfaff;
+
+  --color-info: #a8d8ff;
+  --color-info-content: #1e3a5c;
+  --color-success: #b8e8c4;
+  --color-success-content: #1f4a31;
+  --color-warning: #ffe3a8;
+  --color-warning-content: #6b4e12;
+  --color-error: #ffb3c0;
+  --color-error-content: #6b1f30;
+
+  --radius-selector: 1rem;
+  --radius-field: 1.5rem; /* pill-shaped inputs/buttons, matches the mockup */
+  --radius-box: 1.5rem; /* rounded cards */
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "bytemepastel-dark";
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #221b2e;
+  --color-base-200: #2c2339;
+  --color-base-300: #332a45;
+  --color-base-content: #f1eefa;
+
+  --color-primary: #c9b6ff;
+  --color-primary-content: #221b2e;
+  --color-secondary: #ffb3c6;
+  --color-secondary-content: #221b2e;
+  --color-accent: #a6e8c1;
+  --color-accent-content: #16321f;
+  --color-neutral: #a79bc2;
+  --color-neutral-content: #221b2e;
+
+  --color-info: #8fc6f2;
+  --color-info-content: #0e2338;
+  --color-success: #9bdcae;
+  --color-success-content: #16321f;
+  --color-warning: #f2ce87;
+  --color-warning-content: #3b2a05;
+  --color-error: #f29cae;
+  --color-error-content: #3b0f1b;
+
+  --radius-selector: 1rem;
+  --radius-field: 1.5rem;
+  --radius-box: 1.5rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
 }
