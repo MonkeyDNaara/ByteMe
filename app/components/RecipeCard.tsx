@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import type { MealType, Recipe } from "@/lib/recipe";
 
 type RecipeCardProps = {
@@ -9,10 +11,12 @@ export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
   return (
     <article className="card bg-base-200 shadow-md transition-shadow hover:shadow-xl">
       <figure className="relative h-48">
-        <img
+        <Image
           src={recipe.img_url}
           alt={recipe.name}
-          className="h-full w-full object-cover"
+          fill
+          sizes="(min-width: 768px) 33vw, 100vw"
+          className="object-cover"
         />
         <span className="badge badge-secondary absolute left-3 top-3 font-medium">
           {meal}
