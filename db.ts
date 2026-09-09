@@ -1,7 +1,10 @@
+"use server";
+
 import { neon } from "@neondatabase/serverless";
+import { z } from "zod";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL fehlt in der .env.local Datei!");
-}
+const databaseSchema = z.string().trim().min(1, "DATABASE_URL needed");
 
-export const sql = neon(process.env.DATABASE_URL);
+const databaseUrl = databaseSchema.parse(process.env.DATABASE_URL);
+
+export const sql = neon(databaseUrl);
