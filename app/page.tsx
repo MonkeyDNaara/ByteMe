@@ -1,20 +1,5 @@
-import z from "zod";
-
-const Recipe = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  short_description: z.string(),
-  time: z.number(),
-  incredients: z.array(z.string()),
-  labels: z.array(z.string()),
-  img_url: z.string(),
-  likes: z.number(),
-});
-
-type Recipe = z.infer<typeof Recipe>;
-
-type MealType = "Breakfast" | "Lunch" | "Dinner";
+import RecipeCard from "@/app/components/RecipeCard";
+import { Recipe, type MealType } from "@/lib/recipe";
 
 const recipesOfTheDay: { meal: MealType; recipe: Recipe }[] = [
   {
@@ -99,46 +84,6 @@ const recipesOfTheDay: { meal: MealType; recipe: Recipe }[] = [
     }),
   },
 ];
-
-function RecipeCard({ meal, recipe }: { meal: MealType; recipe: Recipe }) {
-  return (
-    <article className="card bg-base-200 shadow-md transition-shadow hover:shadow-xl">
-      <figure className="relative h-48">
-        {/* Plain <img> so we don't need to configure next/image remote patterns */}
-        <img
-          src={recipe.img_url}
-          alt={recipe.name}
-          className="h-full w-full object-cover"
-        />
-        <span className="badge badge-secondary absolute left-3 top-3 font-medium">
-          {meal}
-        </span>
-      </figure>
-
-      <div className="card-body gap-3">
-        <h4 className="card-title text-lg">{recipe.name}</h4>
-        <p className="text-sm text-base-content/70">
-          {recipe.short_description}
-        </p>
-
-        {recipe.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recipe.labels.map((label) => (
-              <span key={label} className="badge badge-outline badge-sm">
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="card-actions mt-1 items-center justify-between text-sm text-base-content/70">
-          <span>⏱ {recipe.time} min</span>
-          <span>❤ {recipe.likes}</span>
-        </div>
-      </div>
-    </article>
-  );
-}
 
 export default function Home() {
   return (
