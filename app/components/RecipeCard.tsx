@@ -3,8 +3,9 @@ import Image from "next/image";
 import type { MealType, Recipe } from "@/lib/recipe";
 
 type RecipeCardProps = {
-  meal: MealType;
   recipe: Recipe;
+  /** Optional meal badge shown on the image (used on the "recipes of the day" section). */
+  meal?: MealType;
 };
 
 export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
@@ -18,9 +19,11 @@ export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
           sizes="(min-width: 768px) 33vw, 100vw"
           className="object-cover"
         />
-        <span className="badge badge-secondary absolute left-3 top-3 font-medium">
-          {meal}
-        </span>
+        {meal && (
+          <span className="badge badge-secondary absolute left-3 top-3 font-medium">
+            {meal}
+          </span>
+        )}
       </figure>
 
       <div className="card-body gap-3">
