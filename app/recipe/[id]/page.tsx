@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import FavoriteButton from "@/app/components/FavoriteButton";
 import { getRecipeById } from "@/lib/recipe";
 
 export default async function RecipeDetailPage({
@@ -39,14 +40,7 @@ export default async function RecipeDetailPage({
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {recipe.name}
           </h1>
-          {/* TODO: wire up favourite toggle later */}
-          <button
-            type="button"
-            className="btn btn-circle btn-ghost text-xl"
-            aria-label="Save to favourites"
-          >
-            ♡
-          </button>
+          <FavoriteButton recipeId={recipe.id} size="md" />
         </div>
 
         <p className="text-base-content/80">{recipe.short_description}</p>

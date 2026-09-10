@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import RecipeCard from "@/app/components/RecipeCard";
 import { getAllRecipes } from "@/lib/recipe";
 
@@ -28,13 +26,11 @@ export default async function AllRecipesPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {recipes.map((recipe) => (
-            <Link
+            <RecipeCard
               key={recipe.id}
+              recipe={recipe}
               href={`/recipe/${recipe.id}`}
-              className="rounded-box transition-transform hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              <RecipeCard recipe={recipe} />
-            </Link>
+            />
           ))}
         </div>
       )}
