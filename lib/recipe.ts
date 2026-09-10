@@ -16,6 +16,8 @@ export type Recipe = z.infer<typeof Recipe>;
 
 export type MealType = "Breakfast" | "Lunch" | "Dinner";
 
+export const MEALS: MealType[] = ["Breakfast", "Lunch", "Dinner"];
+
 // ---------------------------------------------------------------------------
 // Placeholder data layer.
 //
@@ -45,7 +47,7 @@ const placeholderRecipes: Recipe[] = [
       "150g mixed berries",
       "Maple syrup, to serve",
     ],
-    labels: ["Vegetarian", "Sweet", "Quick", "Family favourite"],
+    labels: ["Breakfast", "Vegetarian", "Sweet", "Quick", "Family favourite"],
     img_url:
       "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80",
     likes: 248,
@@ -69,7 +71,7 @@ const placeholderRecipes: Recipe[] = [
       "1 lemon, juiced",
       "1 clove garlic, grated",
     ],
-    labels: ["Vegetarian", "No-cook", "High protein", "Meal prep"],
+    labels: ["Lunch", "Vegetarian", "No-cook", "High protein", "Meal prep"],
     img_url:
       "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80",
     likes: 187,
@@ -93,7 +95,7 @@ const placeholderRecipes: Recipe[] = [
       "30g butter",
       "Olive oil, salt and pepper",
     ],
-    labels: ["Vegetarian", "Comfort food", "Date night"],
+    labels: ["Dinner", "Vegetarian", "Comfort food", "Date night"],
     img_url:
       "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=800&q=80",
     likes: 312,
@@ -115,7 +117,7 @@ const placeholderRecipes: Recipe[] = [
       "1 banana",
       "Honey, to serve",
     ],
-    labels: ["Vegetarian", "Make ahead", "No-cook"],
+    labels: ["Breakfast", "Vegetarian", "Make ahead", "No-cook"],
     img_url:
       "https://images.unsplash.com/photo-1517673400267-0251440c45dc?auto=format&fit=crop&w=800&q=80",
     likes: 143,
@@ -138,7 +140,7 @@ const placeholderRecipes: Recipe[] = [
       "1 tsp sugar",
       "Salt and pepper",
     ],
-    labels: ["Vegetarian", "Comfort food", "Gluten free"],
+    labels: ["Lunch", "Vegetarian", "Comfort food", "Gluten free"],
     img_url:
       "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80",
     likes: 205,
@@ -162,7 +164,7 @@ const placeholderRecipes: Recipe[] = [
       "1 tbsp fresh thyme",
       "Salt and pepper",
     ],
-    labels: ["High protein", "One pan", "Gluten free"],
+    labels: ["Dinner", "High protein", "One pan", "Gluten free"],
     img_url:
       "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=800&q=80",
     likes: 276,
@@ -177,4 +179,33 @@ export async function getAllRecipes(): Promise<Recipe[]> {
 /** Returns a single recipe by id, or `null` if none matches. TODO: swap for a real DB query. */
 export async function getRecipeById(id: string): Promise<Recipe | null> {
   return placeholderRecipes.find((recipe) => recipe.id === id) ?? null;
+}
+
+/**
+ * Picks one recipe per meal (breakfast / lunch / dinner) at random from the
+ * recipes whose `labels` include that meal. A meal with no matching recipe is
+ * skipped, and a recipe is never reused across slots.
+ *
+ * TODO: swap the data source for a real DB query. Planned follow-up: make the
+ * selection rotate once per day (e.g. seed the pick with the current date)
+ * rather than changing on every call / build.
+ */
+export async function getRecipesOfTheDay(): Promise<
+  { meal: MealType; recipe: Recipe }[]
+> {
+  const used = new Set<string>();
+  const picks: { meal: MealType; recipe: Recipe }[] = [];
+
+  for (const meal of MEALS) {
+    const candidates = placeholderRecipes.filter(
+      (recipe) => recipe.labels.includes(meal) && !used.has(recipe.id),
+    );
+    if (candidates.length === 0) continue;
+
+    const recipe = candidates[Math.floor(Math.random() * candidates.length)];
+    used.add(recipe.id);
+    picks.push({ meal, recipe });
+  }
+
+  return picks;
 }
