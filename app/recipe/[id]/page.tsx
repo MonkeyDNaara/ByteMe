@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import BackButton from "@/app/components/BackButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import { getRecipeById } from "@/lib/recipe";
 
@@ -17,12 +17,7 @@ export default async function RecipeDetailPage({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <Link
-        href="/all-recipes"
-        className="text-sm text-base-content/70 hover:text-base-content"
-      >
-        ← All recipes
-      </Link>
+      <BackButton />
 
       <div className="relative h-64 overflow-hidden rounded-box sm:h-80">
         <Image
