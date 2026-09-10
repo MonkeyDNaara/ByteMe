@@ -1,15 +1,27 @@
 import Image from "next/image";
+import Link from "next/link";
 
+import FavoriteButton from "@/app/components/FavoriteButton";
 import type { MealType, Recipe } from "@/lib/recipe";
 
-type RecipeCardProps = {
-  meal: MealType;
-  recipe: Recipe;
+// Theme-aware badge colour per meal: green / yellow / red.
+const mealBadge: Record<MealType, string> = {
+  Breakfast: "badge-success",
+  Lunch: "badge-warning",
+  Dinner: "badge-error",
 };
 
-export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
-  return (
-    <article className="card bg-base-200 shadow-md transition-shadow hover:shadow-xl">
+type RecipeCardProps = {
+  recipe: Recipe;
+  /** Optional meal badge shown on the image (used on the "recipes of the day" section). */
+  meal?: MealType;
+  /** When set, the card image + body link to this path. */
+  href?: string;
+};
+
+export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
+  const content = (
+    <>
       <figure className="relative h-48">
         <Image
           src={recipe.img_url}
@@ -18,9 +30,13 @@ export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
           sizes="(min-width: 768px) 33vw, 100vw"
           className="object-cover"
         />
-        <span className="badge badge-secondary absolute left-3 top-3 font-medium">
-          {meal}
-        </span>
+        {meal && (
+          <span
+            className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}
+          >
+            {meal}
+          </span>
+        )}
       </figure>
 
       <div className="card-body gap-3">
@@ -44,6 +60,26 @@ export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
           <span>❤ {recipe.likes}</span>
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <article className="card relative overflow-hidden bg-base-200 shadow-md transition-shadow hover:shadow-xl">
+      <FavoriteButton
+        recipeId={recipe.id}
+        className="absolute right-3 top-3 z-10"
+      />
+
+      {href ? (
+        <Link
+          href={href}
+          className="flex flex-col rounded-box focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        >
+          {content}
+        </Link>
+      ) : (
+        content
+      )}
     </article>
   );
 }
