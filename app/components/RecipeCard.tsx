@@ -4,6 +4,13 @@ import Link from "next/link";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import type { MealType, Recipe } from "@/lib/recipe";
 
+// Theme-aware badge colour per meal: green / yellow / red.
+const mealBadge: Record<MealType, string> = {
+  Breakfast: "badge-success",
+  Lunch: "badge-warning",
+  Dinner: "badge-error",
+};
+
 type RecipeCardProps = {
   recipe: Recipe;
   /** Optional meal badge shown on the image (used on the "recipes of the day" section). */
@@ -24,7 +31,9 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
           className="object-cover"
         />
         {meal && (
-          <span className="badge badge-secondary absolute left-3 top-3 font-medium">
+          <span
+            className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}
+          >
             {meal}
           </span>
         )}
