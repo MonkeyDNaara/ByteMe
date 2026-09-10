@@ -1,5 +1,7 @@
 import RecipeCard from "@/app/components/RecipeCard";
 import { Recipe, type MealType } from "@/lib/recipe";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 const recipesOfTheDay: { meal: MealType; recipe: Recipe }[] = [
   {
@@ -88,21 +90,6 @@ const recipesOfTheDay: { meal: MealType; recipe: Recipe }[] = [
 export default function Home() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-10 sm:px-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          byte me
-        </h1>
-        <h2 className="text-lg font-medium text-base-content/80">
-          Description of the page
-        </h2>
-        <p className="max-w-2xl text-sm text-base-content/70">
-          Your daily kitchen companion. Every day we pick three recipes for you
-          — one for breakfast, one for lunch and one for dinner — so you always
-          have a plan. Browse all recipes, save your favourites, or add your
-          own.
-        </p>
-      </header>
-
       <section className="flex flex-col gap-5">
         <div className="flex items-end justify-between">
           <h3 className="text-2xl font-semibold">Recipes of the day</h3>
