@@ -2,7 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
-import type { MealType, Recipe } from "@/lib/recipe";
+import {
+  formatLabel,
+  isOptimizableImageUrl,
+  type MealType,
+  type Recipe,
+} from "@/lib/recipe";
 
 // Theme-aware badge colour per meal: green / yellow / red.
 const mealBadge: Record<MealType, string> = {
@@ -24,11 +29,12 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
     <>
       <figure className="relative h-48">
         <Image
-          src={recipe.img_url}
+          src={recipe.image_url}
           alt={recipe.name}
           fill
           sizes="(min-width: 768px) 33vw, 100vw"
           className="object-cover"
+          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
         />
         {meal && (
           <span
@@ -41,15 +47,13 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
       <div className="card-body gap-3">
         <h4 className="card-title text-lg">{recipe.name}</h4>
-        <p className="text-sm text-base-content/70">
-          {recipe.short_description}
-        </p>
+        <p className="text-sm text-base-content/70">{recipe.snippet}</p>
 
-        {recipe.labels.length > 0 && (
+        {recipe.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {recipe.labels.map((label) => (
-              <span key={label} className="badge badge-outline badge-sm">
-                {label}
+            {recipe.categories.map((category) => (
+              <span key={category} className="badge badge-outline badge-sm">
+                {formatLabel(category)}
               </span>
             ))}
           </div>

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import BackButton from "@/app/components/BackButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
-import { getRecipeById } from "@/lib/recipe";
+import { formatLabel, getRecipeById, isOptimizableImageUrl } from "@/lib/recipe";
 
 export default async function RecipeDetailPage({
   params,
@@ -21,11 +21,12 @@ export default async function RecipeDetailPage({
 
       <div className="relative h-64 overflow-hidden rounded-box sm:h-80">
         <Image
-          src={recipe.img_url}
+          src={recipe.image_url}
           alt={recipe.name}
           fill
           sizes="(min-width: 768px) 768px, 100vw"
           className="object-cover"
+          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
           priority
         />
       </div>
@@ -38,18 +39,18 @@ export default async function RecipeDetailPage({
           <FavoriteButton recipeId={recipe.id} size="md" />
         </div>
 
-        <p className="text-base-content/80">{recipe.short_description}</p>
+        <p className="text-base-content/80">{recipe.snippet}</p>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
           <span>⏱ {recipe.time} min</span>
           <span>❤ {recipe.likes} likes</span>
         </div>
 
-        {recipe.labels.length > 0 && (
+        {recipe.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {recipe.labels.map((label) => (
-              <span key={label} className="badge badge-outline badge-sm">
-                {label}
+            {recipe.categories.map((category) => (
+              <span key={category} className="badge badge-outline badge-sm">
+                {formatLabel(category)}
               </span>
             ))}
           </div>
@@ -59,7 +60,7 @@ export default async function RecipeDetailPage({
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Ingredients</h2>
         <ul className="list-inside list-disc space-y-1 text-base-content/80">
-          {recipe.incredients.map((item) => (
+          {recipe.ingredients.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
