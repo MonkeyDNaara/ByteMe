@@ -2,6 +2,7 @@
 
 import type { MouseEvent } from "react";
 
+import { setRecipeLiked } from "@/lib/likes";
 import { useFavorites } from "@/lib/useFavorites";
 
 type FavoriteButtonProps = {
@@ -24,6 +25,8 @@ export default function FavoriteButton({
     event.preventDefault();
     event.stopPropagation();
     toggleFavorite(recipeId);
+    // Best-effort DB sync; the favourite toggle above doesn't wait on this.
+    void setRecipeLiked(recipeId, !active);
   };
 
   return (
