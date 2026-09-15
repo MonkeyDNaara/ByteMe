@@ -31,6 +31,33 @@ export const getRecipeById = async (id: number) => sql`
 export const getRecipes = async () =>
   sql`SELECT * FROM recipes ORDER BY created_at DESC`;
 
+// delta is +1 (favourited) or -1 (un-favourited); GREATEST keeps likes from
+// going negative if calls ever race or double-fire.
+export const updateRecipeLikes = async (id: number, delta: 1 | -1) =>
+  sql`
+    UPDATE recipes
+    SET likes = GREATEST(likes + ${delta}, 0)
+    WHERE id = ${id}
+  `;
+
+// type RecipeTypes = {
+//   name: string;
+//   description: string;
+//   snippet: string;
+//   time: number;
+//   ingredients: string[];
+//   categories: string[];
+//   image_url: string;
+//   likes: number;
+// };
+
+// export const createRecipe = async (prevState, recipe: RecipeTypes) =>
+//   sql`INSERT INTO recipes (name,description,snippet,time,ingredients,categories,image_url,likes)VALUES (${recipe.name},${recipe.description},${recipe.snippet},${recipe.time},${recipe.ingredients},${recipe.categories},${recipe.image_url},${recipe.likes})`;
+export type RecipeState = {
+  success: boolean;
+  message?: string;
+} | null;
+
 export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,
