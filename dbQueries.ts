@@ -24,19 +24,42 @@ export const updateRecipeLikes = async (id: number, delta: 1 | -1) =>
     WHERE id = ${id}
   `;
 
-// type RecipeTypes = {
-//   name: string;
-//   description: string;
-//   snippet: string;
-//   time: number;
-//   ingredients: string[];
-//   categories: string[];
-//   image_url: string;
-//   likes: number;
-// };
+type RecipeTypes = {
+  name: string;
+  description: string;
+  snippet: string;
+  time: number;
+  ingredients: string[];
+  categories: string[];
+  image_url: string;
+  likes: number;
+};
 
-// export const createRecipe = async (prevState, recipe: RecipeTypes) =>
-//   sql`INSERT INTO recipes (name,description,snippet,time,ingredients,categories,image_url,likes)VALUES (${recipe.name},${recipe.description},${recipe.snippet},${recipe.time},${recipe.ingredients},${recipe.categories},${recipe.image_url},${recipe.likes})`;
+export const insertRecipe = async (recipe: RecipeTypes) => {
+  await sql`
+    INSERT INTO recipes (
+      name,
+      description,
+      snippet,
+      time,
+      ingredients,
+      categories,
+      image_url,
+      likes
+    )
+    VALUES (
+      ${recipe.name},
+      ${recipe.description},
+      ${recipe.snippet},
+      ${recipe.time},
+      ${recipe.ingredients},
+      ${recipe.categories},
+      ${recipe.image_url},
+      ${recipe.likes}
+    )
+  `;
+};
+
 export type RecipeState = {
   success: boolean;
   message?: string;
