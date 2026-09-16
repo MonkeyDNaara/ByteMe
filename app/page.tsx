@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import RecipeCard from "@/app/components/RecipeCard";
 import { getRecipesOfTheDay } from "@/lib/recipe";
 
@@ -37,7 +39,9 @@ export default async function Home() {
         <p className="max-w-md text-sm text-base-content/70">
           Let us pick a random recipe for you from the whole collection.
         </p>
-        <button className="btn btn-primary cursor-pointer">Surprise Me</button>
+        <Link href="/recipe/random" className="btn btn-primary">
+          Surprise Me
+        </Link>
       </section>
     </div>
   );
