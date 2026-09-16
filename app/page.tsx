@@ -3,6 +3,12 @@ import Link from "next/link";
 import RecipeCard from "@/app/components/RecipeCard";
 import { getRecipesOfTheDay } from "@/lib/recipe";
 
+// Re-run on every request so getRecipesOfTheDay() (deterministic per UTC
+// day) can notice a new day has started -- without this the page would be
+// statically prerendered once and stay frozen at whatever "today" was at
+// build/deploy time.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const recipesOfTheDay = await getRecipesOfTheDay();
 
