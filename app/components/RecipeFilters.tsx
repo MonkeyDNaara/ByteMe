@@ -41,6 +41,25 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
     });
   };
 
+  // Shared clamp logic for both the slider and the number input on each side,
+  // so "From" can never exceed "To" (and vice versa) and neither can leave
+  // the dataset's actual min/max, however the value was entered.
+  const setMinTime = (value: number) => {
+    if (Number.isNaN(value)) return;
+    setTimeRange((range) => ({
+      ...range,
+      min: Math.min(Math.max(value, bounds.min), range.max),
+    }));
+  };
+
+  const setMaxTime = (value: number) => {
+    if (Number.isNaN(value)) return;
+    setTimeRange((range) => ({
+      ...range,
+      max: Math.max(Math.min(value, bounds.max), range.min),
+    }));
+  };
+
   const filtered = useMemo(
     () =>
       filterRecipes(recipes, {
@@ -50,10 +69,9 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
     [recipes, selectedCategories, timeRange],
   );
 
-  const hasActiveFilters =
-    selectedCategories.size > 0 ||
-    timeRange.min !== bounds.min ||
-    timeRange.max !== bounds.max;
+  const isFullTimeRange =
+    timeRange.min === bounds.min && timeRange.max === bounds.max;
+  const hasActiveFilters = selectedCategories.size > 0 || !isFullTimeRange;
 
   const clearFilters = () => {
     setSelectedCategories(new Set());
@@ -62,26 +80,33 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-5 rounded-box bg-base-200 p-4 sm:p-6">
+      <div className="flex flex-wrap items-start gap-3">
         {allCategories.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm font-semibold">Labels</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="dropdown">
+            <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
+              Labels
+              {selectedCategories.size > 0 ? ` (${selectedCategories.size})` : ""}
+            </div>
+            <div
+              tabIndex={0}
+              className="dropdown-content z-20 flex max-h-72 w-56 flex-col gap-1 overflow-y-auto rounded-box border border-base-300 bg-base-100 p-3 shadow"
+            >
               {allCategories.map((category) => {
                 const key = category.toLowerCase();
                 const active = selectedCategories.has(key);
                 return (
-                  <button
+                  <label
                     key={key}
-                    type="button"
-                    onClick={() => toggleCategory(category)}
-                    aria-pressed={active}
-                    className={`badge badge-lg cursor-pointer ${
-                      active ? "badge-primary" : "badge-outline"
-                    }`}
+                    className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
                   >
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm"
+                      checked={active}
+                      onChange={() => toggleCategory(category)}
+                    />
                     {formatLabel(category)}
-                  </button>
+                  </label>
                 );
               })}
             </div>
@@ -89,46 +114,68 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         )}
 
         {bounds.max > bounds.min && (
-          <div className="flex flex-col gap-3 sm:max-w-sm">
-            <p className="text-sm font-semibold">
-              Time: {timeRange.min}–{timeRange.max} min
-            </p>
+          <div className="dropdown">
+            <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
+              {isFullTimeRange
+                ? "Time"
+                : `Time: ${timeRange.min}–${timeRange.max} min`}
+            </div>
+            <div
+              tabIndex={0}
+              className="dropdown-content z-20 flex w-72 flex-col gap-4 rounded-box border border-base-300 bg-base-100 p-4 shadow"
+            >
+              <label className="flex flex-col gap-1 text-xs text-base-content/70">
+                From (min)
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={bounds.min}
+                    max={bounds.max}
+                    value={timeRange.min}
+                    onChange={(event) =>
+                      setMinTime(Number(event.target.value))
+                    }
+                    className="range range-primary range-sm flex-1"
+                  />
+                  <input
+                    type="number"
+                    min={bounds.min}
+                    max={bounds.max}
+                    value={timeRange.min}
+                    onChange={(event) =>
+                      setMinTime(Number(event.target.value))
+                    }
+                    className="input input-bordered input-sm w-20"
+                  />
+                </div>
+              </label>
 
-            <label className="flex flex-col gap-1 text-xs text-base-content/70">
-              From: {timeRange.min} min
-              <input
-                type="range"
-                min={bounds.min}
-                max={bounds.max}
-                value={timeRange.min}
-                onChange={(event) => {
-                  const value = Math.min(
-                    Number(event.target.value),
-                    timeRange.max,
-                  );
-                  setTimeRange((range) => ({ ...range, min: value }));
-                }}
-                className="range range-primary range-sm"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1 text-xs text-base-content/70">
-              To: {timeRange.max} min
-              <input
-                type="range"
-                min={bounds.min}
-                max={bounds.max}
-                value={timeRange.max}
-                onChange={(event) => {
-                  const value = Math.max(
-                    Number(event.target.value),
-                    timeRange.min,
-                  );
-                  setTimeRange((range) => ({ ...range, max: value }));
-                }}
-                className="range range-primary range-sm"
-              />
-            </label>
+              <label className="flex flex-col gap-1 text-xs text-base-content/70">
+                To (min)
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={bounds.min}
+                    max={bounds.max}
+                    value={timeRange.max}
+                    onChange={(event) =>
+                      setMaxTime(Number(event.target.value))
+                    }
+                    className="range range-primary range-sm flex-1"
+                  />
+                  <input
+                    type="number"
+                    min={bounds.min}
+                    max={bounds.max}
+                    value={timeRange.max}
+                    onChange={(event) =>
+                      setMaxTime(Number(event.target.value))
+                    }
+                    className="input input-bordered input-sm w-20"
+                  />
+                </div>
+              </label>
+            </div>
           </div>
         )}
 
@@ -136,7 +183,7 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
           <button
             type="button"
             onClick={clearFilters}
-            className="btn btn-ghost btn-sm w-fit"
+            className="btn btn-ghost btn-sm"
           >
             Clear filters
           </button>
