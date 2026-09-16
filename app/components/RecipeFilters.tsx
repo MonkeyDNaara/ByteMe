@@ -89,26 +89,32 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-20 flex max-h-72 w-56 flex-col gap-1 overflow-y-auto rounded-box border border-base-300 bg-base-100 p-3 shadow"
+              className="dropdown-content z-20 max-h-72 w-56 overflow-y-auto rounded-box border border-base-300 bg-base-100 shadow"
             >
-              {allCategories.map((category) => {
-                const key = category.toLowerCase();
-                const active = selectedCategories.has(key);
-                return (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
-                  >
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={active}
-                      onChange={() => toggleCategory(category)}
-                    />
-                    {formatLabel(category)}
-                  </label>
-                );
-              })}
+              {/* daisyUI hides a closed dropdown-content via `display:none`;
+                  a `flex` utility directly on this element would win the
+                  cascade and keep it laid out (and clickable) even while
+                  "closed", so the flex layout lives on this inner div instead. */}
+              <div className="flex flex-col gap-1 p-3">
+                {allCategories.map((category) => {
+                  const key = category.toLowerCase();
+                  const active = selectedCategories.has(key);
+                  return (
+                    <label
+                      key={key}
+                      className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={active}
+                        onChange={() => toggleCategory(category)}
+                      />
+                      {formatLabel(category)}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -122,59 +128,64 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-20 flex w-72 flex-col gap-4 rounded-box border border-base-300 bg-base-100 p-4 shadow"
+              className="dropdown-content z-20 w-72 rounded-box border border-base-300 bg-base-100 shadow"
             >
-              <label className="flex flex-col gap-1 text-xs text-base-content/70">
-                From (min)
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min={bounds.min}
-                    max={bounds.max}
-                    value={timeRange.min}
-                    onChange={(event) =>
-                      setMinTime(Number(event.target.value))
-                    }
-                    className="range range-primary range-sm flex-1"
-                  />
-                  <input
-                    type="number"
-                    min={bounds.min}
-                    max={bounds.max}
-                    value={timeRange.min}
-                    onChange={(event) =>
-                      setMinTime(Number(event.target.value))
-                    }
-                    className="input input-bordered input-sm w-20"
-                  />
-                </div>
-              </label>
+              {/* See the comment on the Labels dropdown-content above: the
+                  flex layout lives on this inner div, not on dropdown-content
+                  itself. */}
+              <div className="flex flex-col gap-4 p-4">
+                <label className="flex flex-col gap-1 text-xs text-base-content/70">
+                  From (min)
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={bounds.min}
+                      max={bounds.max}
+                      value={timeRange.min}
+                      onChange={(event) =>
+                        setMinTime(Number(event.target.value))
+                      }
+                      className="range range-primary range-sm flex-1"
+                    />
+                    <input
+                      type="number"
+                      min={bounds.min}
+                      max={bounds.max}
+                      value={timeRange.min}
+                      onChange={(event) =>
+                        setMinTime(Number(event.target.value))
+                      }
+                      className="input input-bordered input-sm w-20"
+                    />
+                  </div>
+                </label>
 
-              <label className="flex flex-col gap-1 text-xs text-base-content/70">
-                To (min)
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min={bounds.min}
-                    max={bounds.max}
-                    value={timeRange.max}
-                    onChange={(event) =>
-                      setMaxTime(Number(event.target.value))
-                    }
-                    className="range range-primary range-sm flex-1"
-                  />
-                  <input
-                    type="number"
-                    min={bounds.min}
-                    max={bounds.max}
-                    value={timeRange.max}
-                    onChange={(event) =>
-                      setMaxTime(Number(event.target.value))
-                    }
-                    className="input input-bordered input-sm w-20"
-                  />
-                </div>
-              </label>
+                <label className="flex flex-col gap-1 text-xs text-base-content/70">
+                  To (min)
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={bounds.min}
+                      max={bounds.max}
+                      value={timeRange.max}
+                      onChange={(event) =>
+                        setMaxTime(Number(event.target.value))
+                      }
+                      className="range range-primary range-sm flex-1"
+                    />
+                    <input
+                      type="number"
+                      min={bounds.min}
+                      max={bounds.max}
+                      value={timeRange.max}
+                      onChange={(event) =>
+                        setMaxTime(Number(event.target.value))
+                      }
+                      className="input input-bordered input-sm w-20"
+                    />
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         )}
