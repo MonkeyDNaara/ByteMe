@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
@@ -10,11 +11,10 @@ export default function Footer() {
           {/* Spalte 1: App Info */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-lg font-bold">
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-content text-xs font-bold">
-                ⚡
-              </span>
-              <span>byteme</span>
+              <Image src="/logo.svg" alt="byteMe logo" width={40} height={40} className="h-7 w-7 object-contain" />
+              <span>byteMe</span>
             </div>
+
             <p className="max-w-xs text-xs text-base-content/60 leading-relaxed">
               Your daily kitchen companion. Discover recipes, cook with step-by-step timers, and keep your favorites
               organized.
@@ -24,6 +24,7 @@ export default function Footer() {
           {/* Spalte 2: Navigation */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Navigation</p>
+
             <ul className="space-y-1.5 text-sm text-base-content/70">
               <li>
                 <Link href="/" className="hover:text-primary transition-colors">
@@ -51,6 +52,7 @@ export default function Footer() {
           {/* Spalte 3: Meta & Stack */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40">Tech Stack</p>
+
             <p className="text-xs text-base-content/60 leading-relaxed">
               Built with Next.js (App Router), Tailwind CSS, DaisyUI, and Neon PostgreSQL.
             </p>
@@ -58,7 +60,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 border-t border-base-200 pt-6 text-center text-xs text-base-content/40">
-          © {currentYear} byteme. All rights reserved.
+          © {currentYear} byteMe. All rights reserved.
         </div>
       </div>
     </footer>
