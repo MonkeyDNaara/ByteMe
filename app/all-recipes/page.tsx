@@ -1,4 +1,4 @@
-import RecipeCard from "@/app/components/RecipeCard";
+import RecipeFilters from "@/app/components/RecipeFilters";
 import { getAllRecipes } from "@/lib/recipe";
 
 export default async function AllRecipesPage() {
@@ -11,11 +11,8 @@ export default async function AllRecipesPage() {
           All recipes
         </h1>
         <p className="max-w-2xl text-sm text-base-content/70">
-          Browse the full collection. Search and filters are coming soon —
-          for now, pick a card to see the full recipe.
-        </p>
-        <p className="text-sm text-base-content/60">
-          {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
+          Browse the full collection, or narrow it down by label and cook
+          time. Pick a card to see the full recipe.
         </p>
       </header>
 
@@ -24,15 +21,7 @@ export default async function AllRecipesPage() {
           No recipes yet.
         </p>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              href={`/recipe/${recipe.id}`}
-            />
-          ))}
-        </div>
+        <RecipeFilters recipes={recipes} />
       )}
     </div>
   );

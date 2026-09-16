@@ -76,11 +76,6 @@ export const insertRecipe = async (recipe: RecipeTypes) => {
   `;
 };
 
-export type RecipeState = {
-  success: boolean;
-  message?: string;
-} | null;
-
 export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,
