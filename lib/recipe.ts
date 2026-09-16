@@ -127,3 +127,58 @@ export async function getRecipesOfTheDay(): Promise<
 
   return picks;
 }
+
+// ---------------------------------------------------------------------------
+// Filtering helpers for the /all-recipes page. Pure functions over an
+// already-fetched recipe list — no DB access — so they can run entirely on
+// the client alongside the filter UI's local state.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every distinct category across the given recipes, deduped case-insensitively
+ * (categories are stored with inconsistent casing, e.g. "Sweet" vs "sweet")
+ * and sorted alphabetically by its first-seen display form.
+ */
+export function getDistinctCategories(recipes: Recipe[]): string[] {
+  const seen = new Map<string, string>();
+  for (const recipe of recipes) {
+    for (const category of recipe.categories) {
+      const key = category.toLowerCase();
+      if (!seen.has(key)) seen.set(key, category);
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.localeCompare(b));
+}
+
+export type TimeRange = { min: number; max: number };
+
+/** Min/max `time` across the given recipes (both 0 if the list is empty). */
+export function getTimeBounds(recipes: Recipe[]): TimeRange {
+  if (recipes.length === 0) return { min: 0, max: 0 };
+  const times = recipes.map((recipe) => recipe.time);
+  return { min: Math.min(...times), max: Math.max(...times) };
+}
+
+/**
+ * Filters recipes by category and time range. `categories` uses AND
+ * semantics (case-insensitive): a recipe must include every selected
+ * category, not just one. `timeRange` is inclusive.
+ */
+export function filterRecipes(
+  recipes: Recipe[],
+  { categories, timeRange }: { categories: string[]; timeRange: TimeRange },
+): Recipe[] {
+  const wanted = categories.map((category) => category.toLowerCase());
+
+  return recipes.filter((recipe) => {
+    const recipeCategories = recipe.categories.map((category) =>
+      category.toLowerCase(),
+    );
+    const matchesCategories = wanted.every((category) =>
+      recipeCategories.includes(category),
+    );
+    const matchesTime =
+      recipe.time >= timeRange.min && recipe.time <= timeRange.max;
+    return matchesCategories && matchesTime;
+  });
+}

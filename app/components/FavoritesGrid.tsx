@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import RecipeCard from "@/app/components/RecipeCard";
+import RecipeFilters from "@/app/components/RecipeFilters";
 import type { Recipe } from "@/lib/recipe";
 import { useFavorites } from "@/lib/useFavorites";
 
@@ -29,21 +29,5 @@ export default function FavoritesGrid({ recipes }: FavoritesGridProps) {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-5">
-      <p className="text-sm text-base-content/60">
-        {favoriteRecipes.length}{" "}
-        {favoriteRecipes.length === 1 ? "favourite" : "favourites"}
-      </p>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {favoriteRecipes.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe}
-            href={`/recipe/${recipe.id}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  return <RecipeFilters recipes={favoriteRecipes} />;
 }
