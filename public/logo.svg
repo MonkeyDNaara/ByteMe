@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">byteMe logo</title>
+  <desc id="desc">Purple cookbook icon with mint leaf, cream fork and pixel squares.</desc>
+
+  <defs>
+    <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5F48FF"/>
+      <stop offset="100%" stop-color="#6E49FF"/>
+    </linearGradient>
+    <linearGradient id="spine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3C27C8"/>
+      <stop offset="100%" stop-color="#4A2EDB"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#78F0B0"/>
+      <stop offset="100%" stop-color="#9CF6C5"/>
+    </linearGradient>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFDF5"/>
+      <stop offset="100%" stop-color="#F7F2E7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Book silhouette -->
+  <path
+    d="M82 24
+       H378
+       C378 58 394 72 425 72
+       C425 104 442 118 470 118
+       C470 147 484 160 500 162
+       V430
+       C500 462 478 488 444 488
+       H82
+       C43 488 16 459 16 420
+       V92
+       C16 53 43 24 82 24Z"
+    fill="url(#cover)"/>
+
+  <!-- Dark spine -->
+  <path
+    d="M82 24
+       H112
+       V488
+       H82
+       C43 488 16 459 16 420
+       V92
+       C16 53 43 24 82 24Z"
+    fill="url(#spine)"/>
+
+  <!-- Leaf -->
+  <path
+    d="M255 366
+       C235 324 199 304 163 291
+       C110 272 83 235 84 191
+       C84 142 112 104 153 79
+       C188 113 236 120 268 151
+       C297 179 303 220 290 258
+       C280 288 264 320 255 366Z"
+    fill="url(#mint)"/>
+
+  <!-- Leaf cut / vein -->
+  <path
+    d="M252 332
+       C224 276 192 224 143 174"
+    fill="none"
+    stroke="#5B46F6"
+    stroke-width="15"
+    stroke-linecap="round"/>
+
+  <!-- Fork merged with leaf -->
+  <path
+    d="M255 371
+       V233
+       C255 221 265 211 277 211
+       H279
+       V275
+       C279 286 287 294 298 294
+       C309 294 317 286 317 275
+       V211
+       H333
+       V275
+       C333 286 341 294 352 294
+       C363 294 371 286 371 275
+       V211
+       H373
+       C386 211 396 222 396 235
+       V278
+       C396 324 366 349 331 363
+       C307 373 286 389 275 414
+       C270 425 265 434 255 440Z"
+    fill="url(#cream)"/>
+
+  <!-- Stem cap to visually merge fork/leaf -->
+  <rect x="247" y="326" width="24" height="103" rx="12" fill="url(#cream)"/>
+
+  <!-- Pixel squares -->
+  <rect x="345" y="128" width="44" height="44" rx="10" fill="url(#mint)"/>
+  <rect x="309" y="171" width="38" height="38" rx="9" fill="url(#cream)"/>
+  <rect x="390" y="182" width="40" height="40" rx="9" fill="url(#mint)"/>
+</svg>
