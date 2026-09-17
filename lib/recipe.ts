@@ -94,13 +94,28 @@ export async function getRecipeById(id: string): Promise<Recipe | null> {
 }
 
 /**
- * Picks one recipe per meal (breakfast / lunch / dinner) at random from the
- * recipes whose `categories` include that meal (case-insensitive — categories
- * are stored lowercase). A meal with no matching recipe is skipped, and a
- * recipe is never reused across slots.
- *
- * TODO: this changes on every call; the plan is still to make it rotate once
- * per day instead (e.g. seed the pick with the current date).
+ * A pick that's deterministic for a given (day, salt) pair: the same UTC
+ * calendar day and the same salt always produce the same index into a list
+ * of the given length, and it changes once the UTC day rolls over. Used
+ * instead of `Math.random()` so "recipes of the day" is stable across
+ * repeated calls on the same day without needing to cache anything -- the
+ * page itself (see app/page.tsx) just needs to re-run this on a new request
+ * after midnight for the change to show up.
+ */
+function dailyIndex(salt: string, length: number): number {
+  const utcDayNumber = Math.floor(Date.now() / 86_400_000);
+  const saltValue = salt
+    .split("")
+    .reduce((sum, char) => sum + char.codePointAt(0)!, 0);
+  return (utcDayNumber + saltValue) % length;
+}
+
+/**
+ * Picks one recipe per meal (breakfast / lunch / dinner) from the recipes
+ * whose `categories` include that meal (case-insensitive -- categories are
+ * stored lowercase), deterministically for the current UTC day (see
+ * `dailyIndex`). A meal with no matching recipe is skipped, and a recipe is
+ * never reused across slots.
  */
 export async function getRecipesOfTheDay(): Promise<
   { meal: MealType; recipe: Recipe }[]
@@ -120,7 +135,7 @@ export async function getRecipesOfTheDay(): Promise<
     );
     if (candidates.length === 0) continue;
 
-    const recipe = candidates[Math.floor(Math.random() * candidates.length)];
+    const recipe = candidates[dailyIndex(meal, candidates.length)];
     used.add(recipe.id);
     picks.push({ meal, recipe });
   }
