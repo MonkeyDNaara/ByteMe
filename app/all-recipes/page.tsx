@@ -1,7 +1,7 @@
 import RecipeFilters from "@/app/components/RecipeFilters";
 import { getRecipes, searchRecipes } from "@/dbQueries";
 import SearchBar from "./SearchBar";
-import { getAllRecipes } from "@/lib/recipe";
+import { getAllRecipes, Recipe } from "@/lib/recipe";
 import type { Metadata } from "next";
 
 export default async function AllRecipesPage({
@@ -34,7 +34,7 @@ export default async function AllRecipesPage({
           No recipes yet.
         </p>
       ) : (
-        <RecipeFilters recipes={recipes} />
+        <RecipeFilters recipes={recipes as unknown as Recipe[]} />
       )}
     </div>
   );

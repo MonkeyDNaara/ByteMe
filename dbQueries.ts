@@ -29,19 +29,23 @@ export type RecipeState = {
 } | null;
 
 export const getRecipeById = async (id: number): Promise<Recipe[]> => {
-  return sql`
+  const result = await sql`
     SELECT *
     FROM recipes
     WHERE id = ${id}
   `;
+  return result as unknown as Recipe[];
 };
 
-export const getRecipes = async (): Promise<Recipe[]> =>
-  sql`
+export const getRecipes = async (): Promise<Recipe[]> => {
+  const result = await sql`
     SELECT *
     FROM recipes
     ORDER BY created_at DESC
   `;
+
+  return result as unknown as Recipe[];
+};
 
 // delta is +1 (favourited) or -1 (un-favourited)
 export const updateRecipeLikes = async (id: number, delta: 1 | -1) => {
@@ -136,10 +140,12 @@ export const createRecipe = async (
 };
 
 export const searchRecipes = async (search: string): Promise<Recipe[]> => {
-  return sql`
+  const result = sql`
     SELECT *
     FROM recipes
     WHERE name ILIKE ${`%${search}%`}
     ORDER BY created_at DESC
   `;
+
+  return result as unknown as Recipe[];
 };
