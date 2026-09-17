@@ -5,7 +5,9 @@ import Image from "next/image";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
 import {
+  DIFFICULTY_EMOJI,
   formatLabel,
+  getDifficultyLabel,
   isOptimizableImageUrl,
   type MealType,
   type Recipe,
@@ -22,7 +24,7 @@ type RecipeCardProps = {
   recipe: Recipe;
   /** Optional meal badge shown on the image (used on the "recipes of the day" section). */
   meal?: MealType;
-  /** When set, the card image + body link to this path. */
+  /** When set, opening the modal also pushes this path into the URL. */
   href?: string;
 };
 
@@ -79,22 +81,49 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
         )}
       </figure>
 
-      <div className="card-body gap-3">
-        <h4 className="card-title text-lg">{recipe.name}</h4>
+      <div className="card-body flex-1 gap-3">
+        <h4 className="card-title line-clamp-1 text-lg">{recipe.name}</h4>
+        <p className="line-clamp-2 text-sm text-base-content/70">
+          {recipe.snippet}
+        </p>
 
-        <p className="text-sm text-base-content/70">{recipe.snippet}</p>
+        {/* Reserves one badge row's height even with zero/few categories, so
+            this section is a similar size across cards instead of collapsing
+            and leaving a big gap for mt-auto (below) to paper over. */}
+        <div className="flex min-h-7 flex-wrap gap-1.5">
+          {recipe.categories.map((category, index) => (
+            <span
+              key={`${category}-${index}`}
+              className="badge badge-outline badge-sm"
+            >
+              {formatLabel(category)}
+            </span>
+          ))}
+        </div>
 
-        {recipe.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recipe.categories.map((category) => (
-              <span key={category} className="badge badge-outline badge-sm">
-                {formatLabel(category)}
+        {/* Reserved height (like the labels row above) even when there's no
+            rating yet, so an unrated recipe's card doesn't sit at a
+            different height than a rated one in the same grid row. */}
+        <div className="flex min-h-6 items-center gap-0.5">
+          {/* `!= null` on purpose: some pages pass a raw DB row here whose
+              `difficulty` is `undefined` (column missing) rather than a real
+              `null` -- both mean "unrated". */}
+          {recipe.difficulty != null &&
+            Array.from({ length: 5 }, (_, index) => (
+              <span
+                key={index}
+                className={index < recipe.difficulty! ? "" : "opacity-25"}
+              >
+                {DIFFICULTY_EMOJI}
               </span>
             ))}
-          </div>
-        )}
+        </div>
 
-        <div className="card-actions mt-1 items-center justify-between text-sm text-base-content/70">
+        {/* mt-auto is now just a safety net -- title/snippet/labels above are
+            reserved to consistent heights, so it rarely has much space left
+            to absorb, unlike before when it alone had to bridge cards of
+            very different content lengths. */}
+        <div className="card-actions mt-auto items-center justify-between text-sm text-base-content/70">
           <span>⏱ {recipe.time} min</span>
           <span>❤ {recipe.likes}</span>
         </div>
@@ -105,7 +134,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl cursor-pointer"
+        className="group card relative cursor-pointer overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
@@ -164,11 +193,29 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                   <span>❤ {recipe.likes} likes</span>
                 </div>
 
+                {recipe.difficulty != null && (
+                  <div className="flex items-center gap-2 text-sm text-base-content/70">
+                    <span>
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <span
+                          key={index}
+                          className={
+                            index < recipe.difficulty! ? "" : "opacity-25"
+                          }
+                        >
+                          {DIFFICULTY_EMOJI}
+                        </span>
+                      ))}
+                    </span>
+                    <span>{getDifficultyLabel(recipe.difficulty)}</span>
+                  </div>
+                )}
+
                 {recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {recipe.categories.map((category) => (
+                    {recipe.categories.map((category, index) => (
                       <span
-                        key={category}
+                        key={`${category}-${index}`}
                         className="badge badge-outline badge-sm"
                       >
                         {formatLabel(category)}
@@ -182,8 +229,8 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 <h2 className="text-xl font-semibold">Ingredients</h2>
 
                 <ul className="list-inside list-disc space-y-1 text-base-content/80">
-                  {recipe.ingredients.map((item) => (
-                    <li key={item}>{item}</li>
+                  {recipe.ingredients.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
                   ))}
                 </ul>
               </section>

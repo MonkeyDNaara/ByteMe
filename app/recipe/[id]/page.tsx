@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 
 import BackButton from "@/app/components/BackButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
-import { formatLabel, getRecipeById, isOptimizableImageUrl } from "@/lib/recipe";
+import {
+  DIFFICULTY_EMOJI,
+  formatLabel,
+  getDifficultyLabel,
+  getRecipeById,
+  isOptimizableImageUrl,
+} from "@/lib/recipe";
 
 export default async function RecipeDetailPage({
   params,
@@ -46,10 +52,29 @@ export default async function RecipeDetailPage({
           <span>❤ {recipe.likes} likes</span>
         </div>
 
+        {recipe.difficulty != null && (
+          <div className="flex items-center gap-2 text-sm text-base-content/70">
+            <span>
+              {Array.from({ length: 5 }, (_, index) => (
+                <span
+                  key={index}
+                  className={index < recipe.difficulty! ? "" : "opacity-25"}
+                >
+                  {DIFFICULTY_EMOJI}
+                </span>
+              ))}
+            </span>
+            <span>{getDifficultyLabel(recipe.difficulty)}</span>
+          </div>
+        )}
+
         {recipe.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {recipe.categories.map((category) => (
-              <span key={category} className="badge badge-outline badge-sm">
+            {recipe.categories.map((category, index) => (
+              <span
+                key={`${category}-${index}`}
+                className="badge badge-outline badge-sm"
+              >
                 {formatLabel(category)}
               </span>
             ))}
@@ -60,8 +85,8 @@ export default async function RecipeDetailPage({
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Ingredients</h2>
         <ul className="list-inside list-disc space-y-1 text-base-content/80">
-          {recipe.ingredients.map((item) => (
-            <li key={item}>{item}</li>
+          {recipe.ingredients.map((item, index) => (
+            <li key={`${item}-${index}`}>{item}</li>
           ))}
         </ul>
       </section>
