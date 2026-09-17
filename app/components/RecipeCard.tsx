@@ -105,7 +105,10 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
             rating yet, so an unrated recipe's card doesn't sit at a
             different height than a rated one in the same grid row. */}
         <div className="flex min-h-6 items-center gap-0.5">
-          {recipe.difficulty !== null &&
+          {/* `!= null` on purpose: some pages pass a raw DB row here whose
+              `difficulty` is `undefined` (column missing) rather than a real
+              `null` -- both mean "unrated". */}
+          {recipe.difficulty != null &&
             Array.from({ length: 5 }, (_, index) => (
               <span
                 key={index}
@@ -131,7 +134,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
+        className="group card relative cursor-pointer overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
@@ -190,7 +193,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                   <span>❤ {recipe.likes} likes</span>
                 </div>
 
-                {recipe.difficulty !== null && (
+                {recipe.difficulty != null && (
                   <div className="flex items-center gap-2 text-sm text-base-content/70">
                     <span>
                       {Array.from({ length: 5 }, (_, index) => (

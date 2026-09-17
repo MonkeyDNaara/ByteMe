@@ -52,7 +52,7 @@ export default async function RecipeDetailPage({
           <span>❤ {recipe.likes} likes</span>
         </div>
 
-        {recipe.difficulty !== null && (
+        {recipe.difficulty != null && (
           <div className="flex items-center gap-2 text-sm text-base-content/70">
             <span>
               {Array.from({ length: 5 }, (_, index) => (

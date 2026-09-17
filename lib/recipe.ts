@@ -213,7 +213,10 @@ export function filterRecipes(
       recipe.time >= timeRange.min && recipe.time <= timeRange.max;
     const matchesDifficulty =
       wantedDifficulties.size === 0 ||
-      (recipe.difficulty !== null && wantedDifficulties.has(recipe.difficulty));
+      // `!= null` (loose) on purpose: a raw DB row can carry `undefined` here
+      // (e.g. before a migration adds the column) as well as a real `null`,
+      // and both mean "no rating" -- see getDistinctDifficulties below.
+      (recipe.difficulty != null && wantedDifficulties.has(recipe.difficulty));
     return matchesCategories && matchesTime && matchesDifficulty;
   });
 }
@@ -243,11 +246,23 @@ export function getDifficultyLabel(level: number | null): string | null {
   return DIFFICULTY_LABELS[level as DifficultyLevel] ?? null;
 }
 
-/** Distinct difficulty levels actually present among the given recipes (nulls excluded), sorted ascending. */
+/**
+ * Distinct difficulty levels actually present among the given recipes
+ * (nulls excluded), sorted ascending.
+ *
+ * Uses `!= null` (loose) rather than `!== null`: `recipes` here isn't always
+ * the validated `Recipe` from this file -- some pages pass raw DB rows cast
+ * to this type instead, and a row missing the `difficulty` column entirely
+ * (e.g. before a migration adds it) comes through as `undefined`, not
+ * `null`. A strict `!== null` check would let `undefined` slip through as a
+ * "real" level, which is exactly what happened before this comment existed:
+ * every recipe added one `undefined` to the set, producing a single
+ * `key={undefined}` in the difficulty filter dropdown.
+ */
 export function getDistinctDifficulties(recipes: Recipe[]): number[] {
   const levels = new Set<number>();
   for (const recipe of recipes) {
-    if (recipe.difficulty !== null) levels.add(recipe.difficulty);
+    if (recipe.difficulty != null) levels.add(recipe.difficulty);
   }
   return [...levels].sort((a, b) => a - b);
 }
