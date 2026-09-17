@@ -105,7 +105,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
+        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl cursor-pointer"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
