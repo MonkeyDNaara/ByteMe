@@ -40,7 +40,9 @@ export function isOptimizableImageUrl(url: string): boolean {
 
 /** Capitalises a raw category/label for display (categories are stored lowercase, e.g. "breakfast"). */
 export function formatLabel(value: string): string {
-  return value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+  return value.length > 0
+    ? value.charAt(0).toUpperCase() + value.slice(1)
+    : value;
 }
 
 // ---------------------------------------------------------------------------

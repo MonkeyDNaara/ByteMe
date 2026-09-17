@@ -15,7 +15,7 @@ import {
   type TimeRange,
 } from "@/lib/recipe";
 
-type RecipeFiltersProps = {
+export type RecipeFiltersProps = {
   recipes: Recipe[];
 };
 
@@ -111,7 +111,9 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
           <div className="dropdown">
             <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
               Labels
-              {selectedCategories.size > 0 ? ` (${selectedCategories.size})` : ""}
+              {selectedCategories.size > 0
+                ? ` (${selectedCategories.size})`
+                : ""}
             </div>
             <div
               tabIndex={0}

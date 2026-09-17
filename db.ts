@@ -8,3 +8,4 @@ const databaseSchema = z.string().trim().min(1, "DATABASE_URL needed");
 const databaseUrl = databaseSchema.parse(process.env.DATABASE_URL);
 
 export const sql = neon(databaseUrl);
+
