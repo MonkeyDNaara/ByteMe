@@ -10,12 +10,15 @@ type FavoriteButtonProps = {
   /** "sm" for recipe cards, "md" for the recipe detail page. */
   size?: "sm" | "md";
   className?: string;
+  /** Called with the new favourite state right when the button is pressed, so a caller can update a displayed like count optimistically. */
+  onToggle?: (isFavorite: boolean) => void;
 };
 
 export default function FavoriteButton({
   recipeId,
   size = "sm",
   className = "",
+  onToggle,
 }: FavoriteButtonProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const active = isFavorite(recipeId);
@@ -24,9 +27,11 @@ export default function FavoriteButton({
     // The button can sit inside a card that is itself a link.
     event.preventDefault();
     event.stopPropagation();
+    const nextActive = !active;
     toggleFavorite(recipeId);
+    onToggle?.(nextActive);
     // Best-effort DB sync; the favourite toggle above doesn't wait on this.
-    void setRecipeLiked(recipeId, !active);
+    void setRecipeLiked(recipeId, nextActive);
   };
 
   return (
