@@ -26,7 +26,7 @@ export default function BackButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`btn btn-ghost btn-sm w-fit gap-1 ${className}`}
+      className={`text-xl btn btn-ghost btn-sm w-fit gap-1 ${className}`}
     >
       ← Back
     </button>
