@@ -91,8 +91,11 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
             this section is a similar size across cards instead of collapsing
             and leaving a big gap for mt-auto (below) to paper over. */}
         <div className="flex min-h-7 flex-wrap gap-1.5">
-          {recipe.categories.map((category) => (
-            <span key={category} className="badge badge-outline badge-sm">
+          {recipe.categories.map((category, index) => (
+            <span
+              key={`${category}-${index}`}
+              className="badge badge-outline badge-sm"
+            >
               {formatLabel(category)}
             </span>
           ))}
@@ -207,9 +210,9 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
                 {recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {recipe.categories.map((category) => (
+                    {recipe.categories.map((category, index) => (
                       <span
-                        key={category}
+                        key={`${category}-${index}`}
                         className="badge badge-outline badge-sm"
                       >
                         {formatLabel(category)}
@@ -223,8 +226,8 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 <h2 className="text-xl font-semibold">Ingredients</h2>
 
                 <ul className="list-inside list-disc space-y-1 text-base-content/80">
-                  {recipe.ingredients.map((item) => (
-                    <li key={item}>{item}</li>
+                  {recipe.ingredients.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
                   ))}
                 </ul>
               </section>

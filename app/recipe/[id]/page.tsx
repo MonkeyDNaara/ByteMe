@@ -70,8 +70,11 @@ export default async function RecipeDetailPage({
 
         {recipe.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {recipe.categories.map((category) => (
-              <span key={category} className="badge badge-outline badge-sm">
+            {recipe.categories.map((category, index) => (
+              <span
+                key={`${category}-${index}`}
+                className="badge badge-outline badge-sm"
+              >
                 {formatLabel(category)}
               </span>
             ))}
@@ -82,8 +85,8 @@ export default async function RecipeDetailPage({
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Ingredients</h2>
         <ul className="list-inside list-disc space-y-1 text-base-content/80">
-          {recipe.ingredients.map((item) => (
-            <li key={item}>{item}</li>
+          {recipe.ingredients.map((item, index) => (
+            <li key={`${item}-${index}`}>{item}</li>
           ))}
         </ul>
       </section>
