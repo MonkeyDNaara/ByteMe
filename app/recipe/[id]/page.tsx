@@ -97,6 +97,17 @@ export default async function RecipeDetailPage({
           {recipe.description}
         </p>
       </section>
+
+      <div className="flex justify-center">
+        <a
+          href="https://leetcode.com/problemset/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-primary"
+        >
+          Start cooking (for real software developer)
+        </a>
+      </div>
     </div>
   );
 }

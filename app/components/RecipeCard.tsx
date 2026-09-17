@@ -229,6 +229,17 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
                 <p className="leading-relaxed text-base-content/80">{recipe.description}</p>
               </section>
+
+              <div className="flex justify-center">
+                <a
+                  href="https://leetcode.com/problemset/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                >
+                  Start cooking (for real software developer)
+                </a>
+              </div>
             </div>
           </div>
         </div>
