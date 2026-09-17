@@ -78,7 +78,7 @@ export default function SearchBar({ recipes }: SearchBarProps) {
             <Link
               key={recipe.id}
               href={`/recipe/${recipe.id}`}
-              className="flex w-full justify-between px-4 py-3 text-left hover:bg-base-200"
+              className="flex w-full justify-between px-4 py-3 text-left hover:bg-base-200 hover:text-xl"
             >
               <span>{recipe.name}</span>
               <span>🩷 {recipe.likes}</span>
