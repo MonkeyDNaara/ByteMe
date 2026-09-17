@@ -1,7 +1,12 @@
 "use client";
 
 import { createRecipe, RecipeState } from "@/dbQueries";
-import { useActionState, useEffect, useState } from "react";
+import {
+  type SyntheticEvent,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 const CATEGORY_OPTIONS = [
@@ -24,6 +29,10 @@ function CreateRecipe() {
   const router = useRouter();
   const [ingredient, setIngredient] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredientsError, setIngredientsError] = useState<string | null>(
+    null,
+  );
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const handleCreateRecipe = async (
     prevState: RecipeState,
@@ -47,10 +56,30 @@ function CreateRecipe() {
     if (!ingredient.trim()) return;
     setIngredients([...ingredients, ingredient.trim()]);
     setIngredient("");
+    setIngredientsError(null);
   };
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
+    // Native `required` covers the plain text/number fields. Ingredients and
+    // categories are both submitted as repeated fields (hidden inputs /
+    // checkboxes sharing a name), which `required` can't express as "at
+    // least one of these" -- so that's checked here instead.
+    if (ingredients.length === 0) {
+      event.preventDefault();
+      setIngredientsError("Add at least one ingredient.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    if (formData.getAll("categories").length === 0) {
+      event.preventDefault();
+      setCategoryError("Select at least one category.");
+      return;
+    }
   };
 
   return (
@@ -60,13 +89,13 @@ function CreateRecipe() {
           Create a recipe
         </h1>
         <p className="text-sm text-base-content/70">
-          Share your own recipe with the collection — fill in the details
-          below.
+          Share your own recipe with the collection — fill in the details below.
         </p>
       </header>
 
       <form
         action={formAction}
+        onSubmit={handleSubmit}
         className="card flex flex-col gap-5 bg-base-200 p-6 shadow-md sm:p-8"
       >
         <div className="flex flex-col gap-1">
@@ -78,6 +107,7 @@ function CreateRecipe() {
             name="name"
             type="text"
             placeholder="Your recipe name"
+            required
             className="input input-bordered w-full"
           />
         </div>
@@ -91,6 +121,7 @@ function CreateRecipe() {
             name="description"
             placeholder="Describe your recipe here"
             rows={4}
+            required
             className="textarea textarea-bordered w-full"
           />
         </div>
@@ -104,6 +135,7 @@ function CreateRecipe() {
             name="snippet"
             type="text"
             placeholder="Give a short recipe description"
+            required
             className="input input-bordered w-full"
           />
         </div>
@@ -117,6 +149,7 @@ function CreateRecipe() {
             name="time"
             type="number"
             placeholder="45"
+            required
             className="input input-bordered w-full sm:w-40"
           />
         </div>
@@ -146,7 +179,10 @@ function CreateRecipe() {
           {ingredients.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {ingredients.map((item, index) => (
-                <span key={`${item}-${index}`} className="badge badge-outline gap-2">
+                <span
+                  key={`${item}-${index}`}
+                  className="badge badge-outline gap-2"
+                >
                   {item}
                   <button
                     type="button"
@@ -169,6 +205,10 @@ function CreateRecipe() {
               value={item}
             />
           ))}
+
+          {ingredientsError && (
+            <p className="text-sm text-error">{ingredientsError}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -180,13 +220,17 @@ function CreateRecipe() {
             name="image_url"
             type="text"
             placeholder="Image URL"
+            required
             className="input input-bordered w-full"
           />
         </div>
 
         <div className="flex flex-col gap-2">
           <p className="text-sm font-semibold">Categories</p>
-          <div className="flex flex-wrap gap-3">
+          <div
+            onChange={() => setCategoryError(null)}
+            className="flex flex-wrap gap-3"
+          >
             {CATEGORY_OPTIONS.map(({ value, label }) => (
               <label
                 key={value}
@@ -202,6 +246,9 @@ function CreateRecipe() {
               </label>
             ))}
           </div>
+          {categoryError && (
+            <p className="text-sm text-error">{categoryError}</p>
+          )}
         </div>
 
         {state && !state.success && state.message && (
