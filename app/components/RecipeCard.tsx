@@ -55,13 +55,13 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
   const content = (
     <>
-      <figure className="relative h-48">
+      <figure className="relative h-48 overflow-hidden">
         <Image
           src={recipe.image_url}
           alt={recipe.name}
           fill
           sizes="(min-width: 768px) 33vw, 100vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           unoptimized={!isOptimizableImageUrl(recipe.image_url)}
         />
 
@@ -94,7 +94,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="card relative cursor-pointer overflow-hidden bg-base-200 shadow-md transition-shadow hover:shadow-xl"
+        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
