@@ -2,6 +2,11 @@
 
 import { createRecipe, RecipeState } from "@/dbQueries";
 import {
+  CATEGORY_GROUPS,
+  getCategoryGroup,
+  REQUIRED_CATEGORY_GROUP,
+} from "@/lib/recipe";
+import {
   type SyntheticEvent,
   useActionState,
   useEffect,
@@ -9,29 +14,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-const CATEGORY_OPTIONS = [
-  { value: "breakfast", label: "Breakfast" },
-  { value: "lunch", label: "Lunch" },
-  { value: "dinner", label: "Dinner" },
-  { value: "dessert", label: "Dessert" },
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "vegan", label: "Vegan" },
-  { value: "beef", label: "Beef" },
-  { value: "fish", label: "Fish" },
-  { value: "chicken", label: "Chicken" },
-  { value: "sweet", label: "Sweet" },
-  { value: "salty", label: "Salty" },
-  { value: "fast", label: "Fast" },
-  { value: "takesTime", label: "Takes Time" },
-];
-
 function CreateRecipe() {
   const router = useRouter();
   const [ingredient, setIngredient] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
-  const [ingredientsError, setIngredientsError] = useState<string | null>(
-    null,
-  );
+  const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const handleCreateRecipe = async (
@@ -75,9 +62,13 @@ function CreateRecipe() {
     }
 
     const formData = new FormData(event.currentTarget);
-    if (formData.getAll("categories").length === 0) {
+    const selectedCategories = formData.getAll("categories").map(String);
+    const hasRequiredGroup = selectedCategories.some(
+      (category) => getCategoryGroup(category) === REQUIRED_CATEGORY_GROUP,
+    );
+    if (!hasRequiredGroup) {
       event.preventDefault();
-      setCategoryError("Select at least one category.");
+      setCategoryError("Select at least one meal or course type.");
       return;
     }
   };
@@ -100,8 +91,8 @@ function CreateRecipe() {
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="name" className="text-sm font-semibold">
-            Recipe name
-          </label>
+            Recipe name<span className="ml-1 text-error">*</span>
+          </label>{" "}
           <input
             id="name"
             name="name"
@@ -114,7 +105,7 @@ function CreateRecipe() {
 
         <div className="flex flex-col gap-1">
           <label htmlFor="description" className="text-sm font-semibold">
-            Description
+            Description<span className="ml-1 text-error">*</span>
           </label>
           <textarea
             id="description"
@@ -128,7 +119,7 @@ function CreateRecipe() {
 
         <div className="flex flex-col gap-1">
           <label htmlFor="snippet" className="text-sm font-semibold">
-            Short description
+            Short description<span className="ml-1 text-error">*</span>
           </label>
           <input
             id="snippet"
@@ -142,7 +133,7 @@ function CreateRecipe() {
 
         <div className="flex flex-col gap-1">
           <label htmlFor="time" className="text-sm font-semibold">
-            Prep / cook time (minutes)
+            Prep / cook time (minutes)<span className="ml-1 text-error">*</span>
           </label>
           <input
             id="time"
@@ -156,7 +147,7 @@ function CreateRecipe() {
 
         <div className="flex flex-col gap-2">
           <label htmlFor="ingredient" className="text-sm font-semibold">
-            Ingredients
+            Ingredients<span className="ml-1 text-error">*</span>
           </label>
           <div className="flex gap-2">
             <input
@@ -213,7 +204,7 @@ function CreateRecipe() {
 
         <div className="flex flex-col gap-1">
           <label htmlFor="image" className="text-sm font-semibold">
-            Image URL
+            Image URL<span className="ml-1 text-error">*</span>
           </label>
           <input
             id="image"
@@ -225,27 +216,36 @@ function CreateRecipe() {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Categories</p>
-          <div
-            onChange={() => setCategoryError(null)}
-            className="flex flex-wrap gap-3"
-          >
-            {CATEGORY_OPTIONS.map(({ value, label }) => (
-              <label
-                key={value}
-                className="flex cursor-pointer items-center gap-2 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  name="categories"
-                  value={value}
-                  className="checkbox checkbox-sm"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
+        <div
+          onChange={() => setCategoryError(null)}
+          className="flex flex-col gap-4"
+        >
+          {CATEGORY_GROUPS.map((group) => (
+            <div key={group.name} className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">
+                {group.name}
+                {group.name === REQUIRED_CATEGORY_GROUP && (
+                  <span className="ml-1 text-error">*</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {group.options.map(({ value, label }) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      name="categories"
+                      value={value}
+                      className="checkbox checkbox-sm"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
           {categoryError && (
             <p className="text-sm text-error">{categoryError}</p>
           )}

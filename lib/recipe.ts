@@ -197,3 +197,98 @@ export function filterRecipes(
     return matchesCategories && matchesTime;
   });
 }
+
+// ---------------------------------------------------------------------------
+// Category taxonomy, shared by the create-recipe form (which offers these as
+// checkboxes) and the /all-recipes + /favorites "Labels" filter (which
+// groups whatever categories actually exist in the DB using the same
+// lookup). Keeping one source of truth means the two can't drift apart.
+// ---------------------------------------------------------------------------
+
+export type CategoryOption = { value: string; label: string };
+export type CategoryGroup = { name: string; options: CategoryOption[] };
+
+export const CATEGORY_GROUPS: CategoryGroup[] = [
+  {
+    name: "Meal & Course Type",
+    options: [
+      { value: "breakfast", label: "Breakfast" },
+      { value: "lunch", label: "Lunch" },
+      { value: "dinner", label: "Dinner" },
+      { value: "snack", label: "Snack" },
+      { value: "dessert", label: "Dessert" },
+      { value: "brunch", label: "Brunch" },
+      { value: "soup", label: "Soup" },
+      { value: "appetizer", label: "Appetizer" },
+      { value: "salad", label: "Salad" },
+    ],
+  },
+  {
+    name: "Main Ingredient",
+    options: [
+      { value: "beef", label: "Beef" },
+      { value: "fish", label: "Fish" },
+      { value: "chicken", label: "Chicken" },
+      { value: "pork", label: "Pork" },
+      { value: "seafood", label: "Seafood" },
+    ],
+  },
+  {
+    name: "Diet & Nutrition",
+    options: [
+      { value: "vegetarian", label: "Vegetarian" },
+      { value: "vegan", label: "Vegan" },
+      { value: "gluten-free", label: "Gluten-Free" },
+      { value: "nut-free", label: "Nut-Free" },
+      { value: "egg-free", label: "Egg-Free" },
+      { value: "lactose intolerant", label: "Lactose Intolerant" },
+      { value: "low carb", label: "Low Carb" },
+      { value: "low fat", label: "Low Fat" },
+      { value: "low calorie", label: "Low Calorie" },
+      { value: "high fiber", label: "High Fiber" },
+      { value: "high protein", label: "High Protein" },
+      { value: "sugar-free", label: "Sugar-Free" },
+    ],
+  },
+  {
+    name: "Flavor",
+    options: [
+      { value: "sweet", label: "Sweet" },
+      { value: "salty", label: "Salty" },
+    ],
+  },
+  {
+    name: "Cooking Method & Prep",
+    options: [
+      { value: "fast", label: "Fast" },
+      { value: "takes time", label: "Takes Time" },
+      { value: "baking", label: "Baking" },
+      { value: "air fryer", label: "Air Fryer" },
+      { value: "no-cook", label: "No-Cook" },
+      { value: "no-bake", label: "No-Bake" },
+      { value: "one-pot", label: "One-Pot" },
+      { value: "meal prep", label: "Meal Prep" },
+    ],
+  },
+];
+
+/** The group that must have at least one selection when creating a recipe. */
+export const REQUIRED_CATEGORY_GROUP = CATEGORY_GROUPS[0].name;
+
+/** Bucket for any category that exists in the DB but isn't in the taxonomy above. */
+export const OTHER_CATEGORY_GROUP = "Other";
+
+const CATEGORY_TO_GROUP = new Map<string, string>(
+  CATEGORY_GROUPS.flatMap((group) =>
+    group.options.map(
+      (option) => [option.value.toLowerCase(), group.name] as const,
+    ),
+  ),
+);
+
+/** Which taxonomy group a (possibly free-form) category belongs to; "Other" if unrecognized. */
+export function getCategoryGroup(category: string): string {
+  return (
+    CATEGORY_TO_GROUP.get(category.toLowerCase()) ?? OTHER_CATEGORY_GROUP
+  );
+}

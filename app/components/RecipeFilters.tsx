@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 
 import RecipeCard from "@/app/components/RecipeCard";
 import {
+  CATEGORY_GROUPS,
   filterRecipes,
   formatLabel,
+  getCategoryGroup,
   getDistinctCategories,
   getTimeBounds,
+  OTHER_CATEGORY_GROUP,
   type Recipe,
   type TimeRange,
 } from "@/lib/recipe";
@@ -22,6 +25,29 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
     [recipes],
   );
   const bounds = useMemo(() => getTimeBounds(recipes), [recipes]);
+
+  // Cluster whatever categories actually exist in the data under the same
+  // taxonomy the create-recipe form offers, in the same order, plus an
+  // "Other" bucket (non-empty today: real seeded categories like "tasty" or
+  // "comfort food" aren't in the taxonomy) for anything unrecognized.
+  const groupedCategories = useMemo(() => {
+    const byGroup = new Map<string, string[]>();
+    for (const category of allCategories) {
+      const groupName = getCategoryGroup(category);
+      const list = byGroup.get(groupName) ?? [];
+      list.push(category);
+      byGroup.set(groupName, list);
+    }
+
+    const orderedGroupNames = [
+      ...CATEGORY_GROUPS.map((group) => group.name),
+      OTHER_CATEGORY_GROUP,
+    ];
+
+    return orderedGroupNames
+      .map((name) => ({ name, categories: byGroup.get(name) ?? [] }))
+      .filter((group) => group.categories.length > 0);
+  }, [allCategories]);
 
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set(),
@@ -96,24 +122,31 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
                   cascade and keep it laid out (and clickable) even while
                   "closed", so the flex layout lives on this inner div instead. */}
               <div className="flex flex-col gap-1 p-3">
-                {allCategories.map((category) => {
-                  const key = category.toLowerCase();
-                  const active = selectedCategories.has(key);
-                  return (
-                    <label
-                      key={key}
-                      className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
-                    >
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm"
-                        checked={active}
-                        onChange={() => toggleCategory(category)}
-                      />
-                      {formatLabel(category)}
-                    </label>
-                  );
-                })}
+                {groupedCategories.map((group) => (
+                  <div key={group.name} className="flex flex-col gap-1">
+                    <p className="px-1 pt-2 text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                      {group.name}
+                    </p>
+                    {group.categories.map((category) => {
+                      const key = category.toLowerCase();
+                      const active = selectedCategories.has(key);
+                      return (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
+                        >
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm"
+                            checked={active}
+                            onChange={() => toggleCategory(category)}
+                          />
+                          {formatLabel(category)}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
