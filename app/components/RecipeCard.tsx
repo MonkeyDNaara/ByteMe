@@ -45,21 +45,28 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
         )}
       </figure>
 
-      <div className="card-body gap-3">
-        <h4 className="card-title text-lg">{recipe.name}</h4>
-        <p className="text-sm text-base-content/70">{recipe.snippet}</p>
+      <div className="card-body flex-1 gap-3">
+        <h4 className="card-title line-clamp-1 text-lg">{recipe.name}</h4>
+        <p className="line-clamp-2 text-sm text-base-content/70">
+          {recipe.snippet}
+        </p>
 
-        {recipe.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recipe.categories.map((category) => (
-              <span key={category} className="badge badge-outline badge-sm">
-                {formatLabel(category)}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Reserves one badge row's height even with zero/few categories, so
+            this section is a similar size across cards instead of collapsing
+            and leaving a big gap for mt-auto (below) to paper over. */}
+        <div className="flex min-h-7 flex-wrap gap-1.5">
+          {recipe.categories.map((category) => (
+            <span key={category} className="badge badge-outline badge-sm">
+              {formatLabel(category)}
+            </span>
+          ))}
+        </div>
 
-        <div className="card-actions mt-1 items-center justify-between text-sm text-base-content/70">
+        {/* mt-auto is now just a safety net -- title/snippet/labels above are
+            reserved to consistent heights, so it rarely has much space left
+            to absorb, unlike before when it alone had to bridge cards of
+            very different content lengths. */}
+        <div className="card-actions mt-auto items-center justify-between text-sm text-base-content/70">
           <span>⏱ {recipe.time} min</span>
           <span>❤ {recipe.likes}</span>
         </div>
@@ -77,7 +84,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
       {href ? (
         <Link
           href={href}
-          className="flex flex-col rounded-box focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          className="flex h-full flex-col rounded-box focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         >
           {content}
         </Link>
