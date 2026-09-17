@@ -5,12 +5,16 @@ import { useMemo, useState } from "react";
 import RecipeCard from "@/app/components/RecipeCard";
 import {
   CATEGORY_GROUPS,
+  DIFFICULTY_EMOJI,
+  DIFFICULTY_LABELS,
   filterRecipes,
   formatLabel,
   getCategoryGroup,
   getDistinctCategories,
+  getDistinctDifficulties,
   getTimeBounds,
   OTHER_CATEGORY_GROUP,
+  type DifficultyLevel,
   type Recipe,
   type TimeRange,
 } from "@/lib/recipe";
@@ -25,6 +29,10 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
     [recipes],
   );
   const bounds = useMemo(() => getTimeBounds(recipes), [recipes]);
+  const distinctDifficulties = useMemo(
+    () => getDistinctDifficulties(recipes),
+    [recipes],
+  );
 
   // Cluster whatever categories actually exist in the data under the same
   // taxonomy the create-recipe form offers, in the same order, plus an
@@ -52,6 +60,9 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedDifficulties, setSelectedDifficulties] = useState<
+    Set<number>
+  >(new Set());
   const [timeRange, setTimeRange] = useState<TimeRange>(bounds);
 
   const toggleCategory = (category: string) => {
@@ -62,6 +73,18 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         next.delete(key);
       } else {
         next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const toggleDifficulty = (level: number) => {
+    setSelectedDifficulties((prev) => {
+      const next = new Set(prev);
+      if (next.has(level)) {
+        next.delete(level);
+      } else {
+        next.add(level);
       }
       return next;
     });
@@ -91,16 +114,21 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
       filterRecipes(recipes, {
         categories: [...selectedCategories],
         timeRange,
+        difficulties: [...selectedDifficulties],
       }),
-    [recipes, selectedCategories, timeRange],
+    [recipes, selectedCategories, selectedDifficulties, timeRange],
   );
 
   const isFullTimeRange =
     timeRange.min === bounds.min && timeRange.max === bounds.max;
-  const hasActiveFilters = selectedCategories.size > 0 || !isFullTimeRange;
+  const hasActiveFilters =
+    selectedCategories.size > 0 ||
+    selectedDifficulties.size > 0 ||
+    !isFullTimeRange;
 
   const clearFilters = () => {
     setSelectedCategories(new Set());
+    setSelectedDifficulties(new Set());
     setTimeRange(bounds);
   };
 
@@ -220,6 +248,47 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
                     />
                   </div>
                 </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {distinctDifficulties.length > 0 && (
+          <div className="dropdown">
+            <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
+              Difficulty
+              {selectedDifficulties.size > 0
+                ? ` (${selectedDifficulties.size})`
+                : ""}
+            </div>
+            <div
+              tabIndex={0}
+              className="dropdown-content z-20 w-64 rounded-box border border-base-300 bg-base-100 shadow"
+            >
+              {/* See the comment on the Labels dropdown-content above: the
+                  flex layout lives on this inner div, not on dropdown-content
+                  itself. */}
+              <div className="flex flex-col gap-1 p-3">
+                {distinctDifficulties.map((level) => {
+                  const active = selectedDifficulties.has(level);
+                  return (
+                    <label
+                      key={level}
+                      className="flex cursor-pointer items-center gap-2 rounded-field px-1 py-1 text-sm hover:bg-base-200"
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={active}
+                        onChange={() => toggleDifficulty(level)}
+                      />
+                      <span aria-hidden>
+                        {DIFFICULTY_EMOJI.repeat(level)}
+                      </span>
+                      <span>{DIFFICULTY_LABELS[level as DifficultyLevel]}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>

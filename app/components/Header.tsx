@@ -27,7 +27,9 @@ export default function Header() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
     const shouldBeDark = savedTheme ? savedTheme === THEME_DARK : prefersDark;
 
     // DOM-Attribut sofort für CSS setzen
@@ -52,8 +54,18 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-base-300 bg-base-100/90 backdrop-blur-md text-base-content">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-          <Image src="/logo.svg" alt="" width={40} height={40} className="h-10 w-10 object-contain" priority />
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xl font-bold tracking-tight"
+        >
+          <Image
+            src="/logo.svg"
+            alt=""
+            width={40}
+            height={40}
+            className="h-10 w-10 object-contain"
+            priority
+          />
 
           <span>
             byte<span className="text-primary font-bold">Me</span>
@@ -70,7 +82,9 @@ export default function Header() {
                   key={item.href}
                   href={item.href}
                   className={`text-sm font-medium transition-colors ${
-                    isActive ? "text-primary font-semibold" : "text-base-content/70 hover:text-base-content"
+                    isActive
+                      ? "text-primary font-semibold"
+                      : "text-base-content/70 hover:text-base-content"
                   }`}
                 >
                   {item.label}
@@ -87,7 +101,13 @@ export default function Header() {
             aria-label="Theme wechseln"
           >
             {isDark ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -95,7 +115,13 @@ export default function Header() {
                 />
               </svg>
             ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -119,7 +145,13 @@ export default function Header() {
             aria-label="Theme wechseln"
           >
             {isDark ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -127,7 +159,13 @@ export default function Header() {
                 />
               </svg>
             ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -144,12 +182,32 @@ export default function Header() {
             aria-label="Toggle menu"
           >
             {isMobileOpen ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
@@ -168,7 +226,9 @@ export default function Header() {
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive ? "bg-base-200 text-primary font-semibold" : "text-base-content/80 hover:bg-base-200"
+                    isActive
+                      ? "bg-base-200 text-primary font-semibold"
+                      : "text-base-content/80 hover:bg-base-200"
                   }`}
                 >
                   {item.label}

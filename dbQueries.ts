@@ -13,6 +13,11 @@ const recipeSchema = z.object({
     .min(1, "At least one ingredient is required"),
   categories: z.array(z.string()).min(1, "At least one category is required"),
   image_url: z.string().url("Invalid image URL"),
+  difficulty: z.coerce
+    .number()
+    .int()
+    .min(1, "Difficulty is required")
+    .max(5, "Difficulty is required"),
 });
 
 type RecipeInput = z.infer<typeof recipeSchema>;
@@ -66,7 +71,8 @@ export const createRecipeDEV = async (recipe: RecipeInput) => {
       ingredients,
       categories,
       image_url,
-      likes
+      likes,
+      difficulty
     )
     VALUES (
       ${recipe.name},
@@ -76,7 +82,8 @@ export const createRecipeDEV = async (recipe: RecipeInput) => {
       ${recipe.ingredients},
       ${recipe.categories},
       ${recipe.image_url},
-      ${Math.floor(Math.random() * 10 ** Math.floor((Math.random() + 1) * 3))}
+      ${Math.floor(Math.random() * 10 ** Math.floor((Math.random() + 1) * 3))},
+      ${recipe.difficulty}
     )
   `;
 };
@@ -93,6 +100,7 @@ export const createRecipe = async (
     ingredients: formData.getAll("ingredients"),
     categories: formData.getAll("categories"),
     image_url: formData.get("image_url"),
+    difficulty: formData.get("difficulty"),
   });
 
   if (!result.success) {
@@ -114,7 +122,8 @@ export const createRecipe = async (
         ingredients,
         categories,
         image_url,
-        likes
+        likes,
+        difficulty
       )
       VALUES (
         ${recipe.name},
@@ -124,7 +133,8 @@ export const createRecipe = async (
         ${recipe.ingredients},
         ${recipe.categories},
         ${recipe.image_url},
-        0
+        0,
+        ${recipe.difficulty}
       )
     `;
 
@@ -136,6 +146,45 @@ export const createRecipe = async (
       success: false,
       message: "Failed to create recipe",
     };
+  }
+};
+
+export const updateRecipe = async (id: number, recipe: RecipeInput) => {
+  try {
+    await sql`
+      UPDATE recipes
+      SET
+        name = ${recipe.name},
+        description = ${recipe.description},
+        snippet = ${recipe.snippet},
+        time = ${recipe.time},
+        ingredients = ${recipe.ingredients},
+        categories = ${recipe.categories},
+        image_url = ${recipe.image_url},
+        difficulty = ${recipe.difficulty}
+      WHERE id = ${id}
+    `;
+
+    return { success: true };
+  } catch (error) {
+    console.error("Database Error:", error);
+
+    return { success: false };
+  }
+};
+
+export const deleteRecipe = async (id: number) => {
+  try {
+    await sql`
+      DELETE FROM recipes
+      WHERE id = ${id}
+    `;
+
+    return { success: true };
+  } catch (error) {
+    console.error("Database Error:", error);
+
+    return { success: false };
   }
 };
 
