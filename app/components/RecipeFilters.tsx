@@ -183,6 +183,9 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         )}
 
         {bounds.max > bounds.min && (
+          // Time sits close enough to the left of this row that its default
+          // (left-anchored) panel only needs to be slightly narrower than it
+          // was (w-64 instead of w-72) to stay fully inside a 375px viewport.
           <div className="dropdown">
             <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
               {isFullTimeRange
@@ -191,7 +194,7 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-20 w-72 rounded-box border border-base-300 bg-base-100 shadow"
+              className="dropdown-content z-20 w-64 rounded-box border border-base-300 bg-base-100 shadow"
             >
               {/* See the comment on the Labels dropdown-content above: the
                   flex layout lives on this inner div, not on dropdown-content
@@ -254,7 +257,12 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         )}
 
         {distinctDifficulties.length > 0 && (
-          <div className="dropdown">
+          // dropdown-end anchors the panel to this trigger's *right* edge:
+          // Difficulty sits furthest right in this row, so its default
+          // left-anchored panel overflowed the most. Narrowed to w-56 (from
+          // w-64) so the right-anchored panel's left edge also stays inside
+          // the viewport, not just its right edge.
+          <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-outline btn-sm">
               Difficulty
               {selectedDifficulties.size > 0
@@ -263,7 +271,7 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-20 w-64 rounded-box border border-base-300 bg-base-100 shadow"
+              className="dropdown-content z-20 w-56 rounded-box border border-base-300 bg-base-100 shadow"
             >
               {/* See the comment on the Labels dropdown-content above: the
                   flex layout lives on this inner div, not on dropdown-content
