@@ -1,7 +1,7 @@
 import RecipeFilters from "@/app/components/RecipeFilters";
 import { getRecipes, searchRecipes } from "@/dbQueries";
 import SearchBar from "./SearchBar";
-import { getAllRecipes, Recipe } from "@/lib/recipe";
+import { Recipe } from "@/lib/recipe";
 import type { Metadata } from "next";
 
 export default async function AllRecipesPage({
