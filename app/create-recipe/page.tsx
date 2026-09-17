@@ -8,6 +8,8 @@ function CreateRecipe() {
   const router = useRouter();
   const [ingredient, setIngredient] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [isVegetarian, setIsVegetarian] = useState(false);
+  const [isVegan, setIsVegan] = useState(false);
 
   const handleCreateRecipe = async (
     prevState: RecipeState,
@@ -159,6 +161,8 @@ function CreateRecipe() {
                 type="checkbox"
                 name="categories"
                 value="vegetarian"
+                checked={isVegetarian}
+                onChange={(e) => setIsVegetarian(e.target.checked)}
                 className="mr-1"
               />
               Vegetarian
@@ -168,6 +172,14 @@ function CreateRecipe() {
                 type="checkbox"
                 name="categories"
                 value="vegan"
+                checked={isVegan}
+                onChange={(e) => {
+                  setIsVegan(e.target.checked);
+
+                  if (e.target.checked) {
+                    setIsVegetarian(true);
+                  }
+                }}
                 className="mr-1"
               />
               Vegan

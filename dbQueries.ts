@@ -15,43 +15,44 @@ const recipeSchema = z.object({
   image_url: z.string().url("Invalid image URL"),
 });
 
-type Recipe = z.infer<typeof recipeSchema>;
+type RecipeInput = z.infer<typeof recipeSchema>;
+
+export type Recipe = RecipeInput & {
+  id: number;
+  likes: number;
+  created_at: Date;
+};
 
 export type RecipeState = {
   success: boolean;
   message?: string;
 } | null;
 
-export const getRecipeById = async (id: number) => sql`
+export const getRecipeById = async (id: number): Promise<Recipe[]> => {
+  return sql`
     SELECT *
     FROM recipes
     WHERE id = ${id}
-`;
+  `;
+};
 
-export const getRecipes = async () =>
-  sql`SELECT * FROM recipes ORDER BY created_at DESC`;
-
-// delta is +1 (favourited) or -1 (un-favourited); GREATEST keeps likes from
-// going negative if calls ever race or double-fire.
-export const updateRecipeLikes = async (id: number, delta: 1 | -1) =>
+export const getRecipes = async (): Promise<Recipe[]> =>
   sql`
+    SELECT *
+    FROM recipes
+    ORDER BY created_at DESC
+  `;
+
+// delta is +1 (favourited) or -1 (un-favourited)
+export const updateRecipeLikes = async (id: number, delta: 1 | -1) => {
+  return sql`
     UPDATE recipes
     SET likes = GREATEST(likes + ${delta}, 0)
     WHERE id = ${id}
   `;
-
-type RecipeTypes = {
-  name: string;
-  description: string;
-  snippet: string;
-  time: number;
-  ingredients: string[];
-  categories: string[];
-  image_url: string;
-  likes: number;
 };
 
-export const insertRecipe = async (recipe: RecipeTypes) => {
+export const createRecipeDEV = async (recipe: RecipeInput) => {
   await sql`
     INSERT INTO recipes (
       name,
@@ -71,7 +72,7 @@ export const insertRecipe = async (recipe: RecipeTypes) => {
       ${recipe.ingredients},
       ${recipe.categories},
       ${recipe.image_url},
-      ${recipe.likes}
+      ${Math.floor(Math.random() * 10 ** Math.floor((Math.random() + 1) * 3))}
     )
   `;
 };
@@ -80,7 +81,7 @@ export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,
 ) => {
-  const recipe = {
+  const result = recipeSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
     snippet: formData.get("snippet"),
@@ -88,62 +89,57 @@ export const createRecipe = async (
     ingredients: formData.getAll("ingredients"),
     categories: formData.getAll("categories"),
     image_url: formData.get("image_url"),
-  };
-  const likes = 0;
+  });
 
-  const parsedRecipe = recipeSchema.safeParse(recipe);
-
-  if (!parsedRecipe.success) {
-    console.log(parsedRecipe.error);
+  if (!result.success) {
     return {
       success: false,
-      message: "Invalid recipe data",
+      message: result.error.issues[0]?.message ?? "Invalid recipe data",
     };
   }
 
-  try {
-    await sql`INSERT INTO recipes (name,description,snippet,time,ingredients,categories,image_url,likes)VALUES (${parsedRecipe.data.name},${parsedRecipe.data.description},${parsedRecipe.data.snippet},${parsedRecipe.data.time},${parsedRecipe.data.ingredients},${parsedRecipe.data.categories},${parsedRecipe.data.image_url},${likes})`;
-    return { success: true };
-  } catch (error) {
-    console.error("Database Error:", error);
-    return { success: false };
-  }
-};
+  const recipe = result.data;
 
-export const updateRecipe = async (id: number, recipe: Recipe) => {
   try {
     await sql`
-      UPDATE recipes
-      SET
-        name = ${recipe.name},
-        description = ${recipe.description},
-        snippet = ${recipe.snippet},
-        time = ${recipe.time},
-        ingredients = ${recipe.ingredients},
-        categories = ${recipe.categories},
-        image_url = ${recipe.image_url}
-      WHERE id = ${id}
+      INSERT INTO recipes (
+        name,
+        description,
+        snippet,
+        time,
+        ingredients,
+        categories,
+        image_url,
+        likes
+      )
+      VALUES (
+        ${recipe.name},
+        ${recipe.description},
+        ${recipe.snippet},
+        ${recipe.time},
+        ${recipe.ingredients},
+        ${recipe.categories},
+        ${recipe.image_url},
+        0
+      )
     `;
 
     return { success: true };
   } catch (error) {
     console.error("Database Error:", error);
 
-    return { success: false };
+    return {
+      success: false,
+      message: "Failed to create recipe",
+    };
   }
 };
 
-export const deleteRecipe = async (id: number) => {
-  try {
-    await sql`
-      DELETE FROM recipes
-      WHERE id = ${id}
-    `;
-
-    return { success: true };
-  } catch (error) {
-    console.error("Database Error:", error);
-
-    return { success: false };
-  }
+export const searchRecipes = async (search: string): Promise<Recipe[]> => {
+  return sql`
+    SELECT *
+    FROM recipes
+    WHERE name ILIKE ${`%${search}%`}
+    ORDER BY created_at DESC
+  `;
 };
