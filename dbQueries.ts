@@ -13,6 +13,11 @@ const recipeSchema = z.object({
     .min(1, "At least one ingredient is required"),
   categories: z.array(z.string()).min(1, "At least one category is required"),
   image_url: z.string().url("Invalid image URL"),
+  difficulty: z.coerce
+    .number()
+    .int()
+    .min(1, "Difficulty is required")
+    .max(5, "Difficulty is required"),
 });
 
 type Recipe = z.infer<typeof recipeSchema>;
@@ -49,6 +54,7 @@ type RecipeTypes = {
   categories: string[];
   image_url: string;
   likes: number;
+  difficulty: number | null;
 };
 
 export const insertRecipe = async (recipe: RecipeTypes) => {
@@ -61,7 +67,8 @@ export const insertRecipe = async (recipe: RecipeTypes) => {
       ingredients,
       categories,
       image_url,
-      likes
+      likes,
+      difficulty
     )
     VALUES (
       ${recipe.name},
@@ -71,7 +78,8 @@ export const insertRecipe = async (recipe: RecipeTypes) => {
       ${recipe.ingredients},
       ${recipe.categories},
       ${recipe.image_url},
-      ${recipe.likes}
+      ${recipe.likes},
+      ${recipe.difficulty}
     )
   `;
 };
@@ -88,6 +96,7 @@ export const createRecipe = async (
     ingredients: formData.getAll("ingredients"),
     categories: formData.getAll("categories"),
     image_url: formData.get("image_url"),
+    difficulty: formData.get("difficulty"),
   };
   const likes = 0;
 
@@ -101,8 +110,10 @@ export const createRecipe = async (
     };
   }
 
+  const difficulty = parsedRecipe.data.difficulty;
+
   try {
-    await sql`INSERT INTO recipes (name,description,snippet,time,ingredients,categories,image_url,likes)VALUES (${parsedRecipe.data.name},${parsedRecipe.data.description},${parsedRecipe.data.snippet},${parsedRecipe.data.time},${parsedRecipe.data.ingredients},${parsedRecipe.data.categories},${parsedRecipe.data.image_url},${likes})`;
+    await sql`INSERT INTO recipes (name,description,snippet,time,ingredients,categories,image_url,likes,difficulty)VALUES (${parsedRecipe.data.name},${parsedRecipe.data.description},${parsedRecipe.data.snippet},${parsedRecipe.data.time},${parsedRecipe.data.ingredients},${parsedRecipe.data.categories},${parsedRecipe.data.image_url},${likes},${difficulty})`;
     return { success: true };
   } catch (error) {
     console.error("Database Error:", error);
@@ -121,7 +132,8 @@ export const updateRecipe = async (id: number, recipe: Recipe) => {
         time = ${recipe.time},
         ingredients = ${recipe.ingredients},
         categories = ${recipe.categories},
-        image_url = ${recipe.image_url}
+        image_url = ${recipe.image_url},
+        difficulty = ${recipe.difficulty}
       WHERE id = ${id}
     `;
 

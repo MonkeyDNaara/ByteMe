@@ -15,6 +15,7 @@ export const Recipe = z.object({
   categories: z.array(z.string()),
   image_url: z.string().min(1),
   likes: z.number(),
+  difficulty: z.number().int().min(1).max(5).nullable(),
 });
 
 export type Recipe = z.infer<typeof Recipe>;
@@ -40,7 +41,9 @@ export function isOptimizableImageUrl(url: string): boolean {
 
 /** Capitalises a raw category/label for display (categories are stored lowercase, e.g. "breakfast"). */
 export function formatLabel(value: string): string {
-  return value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+  return value.length > 0
+    ? value.charAt(0).toUpperCase() + value.slice(1)
+    : value;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,6 +66,7 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
     categories: row.categories ?? [],
     image_url: row.image_url ?? "",
     likes: row.likes ?? 0,
+    difficulty: row.difficulty ?? null,
   });
 
   if (!result.success) {
@@ -175,15 +179,28 @@ export function getTimeBounds(recipes: Recipe[]): TimeRange {
 }
 
 /**
- * Filters recipes by category and time range. `categories` uses AND
- * semantics (case-insensitive): a recipe must include every selected
- * category, not just one. `timeRange` is inclusive.
+ * Filters recipes by category, time range, and difficulty. `categories` uses
+ * AND semantics (case-insensitive): a recipe must include every selected
+ * category. `difficulties` uses OR semantics instead: a recipe only has one
+ * difficulty, so "must match every selected level" would never match more
+ * than one selection -- it just needs to match any of them. `timeRange` is
+ * inclusive. An empty `categories`/`difficulties` list applies no filter for
+ * that dimension.
  */
 export function filterRecipes(
   recipes: Recipe[],
-  { categories, timeRange }: { categories: string[]; timeRange: TimeRange },
+  {
+    categories,
+    timeRange,
+    difficulties = [],
+  }: {
+    categories: string[];
+    timeRange: TimeRange;
+    difficulties?: number[];
+  },
 ): Recipe[] {
   const wanted = categories.map((category) => category.toLowerCase());
+  const wantedDifficulties = new Set(difficulties);
 
   return recipes.filter((recipe) => {
     const recipeCategories = recipe.categories.map((category) =>
@@ -194,8 +211,45 @@ export function filterRecipes(
     );
     const matchesTime =
       recipe.time >= timeRange.min && recipe.time <= timeRange.max;
-    return matchesCategories && matchesTime;
+    const matchesDifficulty =
+      wantedDifficulties.size === 0 ||
+      (recipe.difficulty !== null && wantedDifficulties.has(recipe.difficulty));
+    return matchesCategories && matchesTime && matchesDifficulty;
   });
+}
+
+// ---------------------------------------------------------------------------
+// Difficulty: a 1-5 rating shown as "cooking pod" emoji (N of 5 filled) on
+// the card and detail page, plus a flavour-text class on the detail page.
+// Nullable in the DB -- most existing recipes have no rating yet.
+// ---------------------------------------------------------------------------
+
+export const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5] as const;
+export type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
+
+export const DIFFICULTY_EMOJI = "🍲";
+
+export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
+  1: "Can do a newborn",
+  2: "Easy peasy",
+  3: "Normal muggel",
+  4: "Muggel with 2 hands",
+  5: "Master chef",
+};
+
+/** The flavour-text class for a difficulty level, or `null` for an unrecognized/missing level. */
+export function getDifficultyLabel(level: number | null): string | null {
+  if (level === null) return null;
+  return DIFFICULTY_LABELS[level as DifficultyLevel] ?? null;
+}
+
+/** Distinct difficulty levels actually present among the given recipes (nulls excluded), sorted ascending. */
+export function getDistinctDifficulties(recipes: Recipe[]): number[] {
+  const levels = new Set<number>();
+  for (const recipe of recipes) {
+    if (recipe.difficulty !== null) levels.add(recipe.difficulty);
+  }
+  return [...levels].sort((a, b) => a - b);
 }
 
 // ---------------------------------------------------------------------------
@@ -288,7 +342,5 @@ const CATEGORY_TO_GROUP = new Map<string, string>(
 
 /** Which taxonomy group a (possibly free-form) category belongs to; "Other" if unrecognized. */
 export function getCategoryGroup(category: string): string {
-  return (
-    CATEGORY_TO_GROUP.get(category.toLowerCase()) ?? OTHER_CATEGORY_GROUP
-  );
+  return CATEGORY_TO_GROUP.get(category.toLowerCase()) ?? OTHER_CATEGORY_GROUP;
 }

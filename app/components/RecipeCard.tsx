@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
 import {
+  DIFFICULTY_EMOJI,
   formatLabel,
   isOptimizableImageUrl,
   type MealType,
@@ -60,6 +61,21 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
               {formatLabel(category)}
             </span>
           ))}
+        </div>
+
+        {/* Reserved height (like the labels row above) even when there's no
+            rating yet, so an unrated recipe's card doesn't sit at a
+            different height than a rated one in the same grid row. */}
+        <div className="flex min-h-6 items-center gap-0.5">
+          {recipe.difficulty !== null &&
+            Array.from({ length: 5 }, (_, index) => (
+              <span
+                key={index}
+                className={index < recipe.difficulty! ? "" : "opacity-25"}
+              >
+                {DIFFICULTY_EMOJI}
+              </span>
+            ))}
         </div>
 
         {/* mt-auto is now just a safety net -- title/snippet/labels above are

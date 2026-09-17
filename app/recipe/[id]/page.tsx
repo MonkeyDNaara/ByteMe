@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 
 import BackButton from "@/app/components/BackButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
-import { formatLabel, getRecipeById, isOptimizableImageUrl } from "@/lib/recipe";
+import {
+  DIFFICULTY_EMOJI,
+  formatLabel,
+  getDifficultyLabel,
+  getRecipeById,
+  isOptimizableImageUrl,
+} from "@/lib/recipe";
 
 export default async function RecipeDetailPage({
   params,
@@ -45,6 +51,22 @@ export default async function RecipeDetailPage({
           <span>⏱ {recipe.time} min</span>
           <span>❤ {recipe.likes} likes</span>
         </div>
+
+        {recipe.difficulty !== null && (
+          <div className="flex items-center gap-2 text-sm text-base-content/70">
+            <span>
+              {Array.from({ length: 5 }, (_, index) => (
+                <span
+                  key={index}
+                  className={index < recipe.difficulty! ? "" : "opacity-25"}
+                >
+                  {DIFFICULTY_EMOJI}
+                </span>
+              ))}
+            </span>
+            <span>{getDifficultyLabel(recipe.difficulty)}</span>
+          </div>
+        )}
 
         {recipe.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

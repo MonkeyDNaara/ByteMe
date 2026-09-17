@@ -3,6 +3,9 @@
 import { createRecipe, RecipeState } from "@/dbQueries";
 import {
   CATEGORY_GROUPS,
+  DIFFICULTY_EMOJI,
+  DIFFICULTY_LABELS,
+  DIFFICULTY_LEVELS,
   getCategoryGroup,
   REQUIRED_CATEGORY_GROUP,
 } from "@/lib/recipe";
@@ -249,6 +252,28 @@ function CreateRecipe() {
           {categoryError && (
             <p className="text-sm text-error">{categoryError}</p>
           )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="difficulty" className="text-sm font-semibold">
+            Difficulty<span className="ml-1 text-error">*</span>
+          </label>
+          <select
+            id="difficulty"
+            name="difficulty"
+            defaultValue=""
+            required
+            className="select select-bordered w-full"
+          >
+            <option value="" disabled>
+              Select a difficulty
+            </option>
+            {DIFFICULTY_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {DIFFICULTY_EMOJI.repeat(level)} — {DIFFICULTY_LABELS[level]}
+              </option>
+            ))}
+          </select>
         </div>
 
         {state && !state.success && state.message && (
