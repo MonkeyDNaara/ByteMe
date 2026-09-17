@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
-import {
-  formatLabel,
-  isOptimizableImageUrl,
-  type MealType,
-  type Recipe,
-} from "@/lib/recipe";
+import { formatLabel, isOptimizableImageUrl, type MealType, type Recipe } from "@/lib/recipe";
 
 // Theme-aware badge colour per meal: green / yellow / red.
 const mealBadge: Record<MealType, string> = {
@@ -70,13 +65,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
           unoptimized={!isOptimizableImageUrl(recipe.image_url)}
         />
 
-        {meal && (
-          <span
-            className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}
-          >
-            {meal}
-          </span>
-        )}
+        {meal && <span className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}>{meal}</span>}
       </figure>
 
       <div className="card-body gap-3">
@@ -105,14 +94,11 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="group card relative overflow-hidden bg-base-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
+        className="group card relative overflow-hidden border border-primary/20 bg-base-200 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
-          <FavoriteButton
-            recipeId={String(recipe.id)}
-            className="absolute right-3 top-3 z-10"
-          />
+          <FavoriteButton recipeId={String(recipe.id)} className="absolute right-3 top-3 z-10" />
         </div>
 
         {content}
@@ -120,11 +106,11 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm"
           onClick={closeModal}
         >
           <div
-            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-base-100 shadow-2xl"
+            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-primary/20 bg-base-200 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -150,9 +136,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
               <header className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    {recipe.name}
-                  </h1>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{recipe.name}</h1>
 
                   <FavoriteButton recipeId={String(recipe.id)} size="md" />
                 </div>
@@ -167,10 +151,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 {recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {recipe.categories.map((category) => (
-                      <span
-                        key={category}
-                        className="badge badge-outline badge-sm"
-                      >
+                      <span key={category} className="badge badge-outline badge-sm">
                         {formatLabel(category)}
                       </span>
                     ))}
@@ -191,9 +172,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
               <section className="flex flex-col gap-3">
                 <h2 className="text-xl font-semibold">Method</h2>
 
-                <p className="leading-relaxed text-base-content/80">
-                  {recipe.description}
-                </p>
+                <p className="leading-relaxed text-base-content/80">{recipe.description}</p>
               </section>
             </div>
           </div>
