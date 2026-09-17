@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
-import { formatLabel, isOptimizableImageUrl, type MealType, type Recipe } from "@/lib/recipe";
+import {
+  formatLabel,
+  isOptimizableImageUrl,
+  type MealType,
+  type Recipe,
+} from "@/lib/recipe";
 
 // Theme-aware badge colour per meal: green / yellow / red.
 const mealBadge: Record<MealType, string> = {
@@ -65,7 +70,13 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
           unoptimized={!isOptimizableImageUrl(recipe.image_url)}
         />
 
-        {meal && <span className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}>{meal}</span>}
+        {meal && (
+          <span
+            className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}
+          >
+            {meal}
+          </span>
+        )}
       </figure>
 
       <div className="card-body gap-3">
@@ -98,7 +109,10 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
-          <FavoriteButton recipeId={recipe.id} className="absolute right-3 top-3 z-10" />
+          <FavoriteButton
+            recipeId={String(recipe.id)}
+            className="absolute right-3 top-3 z-10"
+          />
         </div>
 
         {content}
@@ -136,9 +150,11 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
               <header className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{recipe.name}</h1>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    {recipe.name}
+                  </h1>
 
-                  <FavoriteButton recipeId={recipe.id} size="md" />
+                  <FavoriteButton recipeId={String(recipe.id)} size="md" />
                 </div>
 
                 <p className="text-base-content/80">{recipe.snippet}</p>
@@ -151,7 +167,10 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 {recipe.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {recipe.categories.map((category) => (
-                      <span key={category} className="badge badge-outline badge-sm">
+                      <span
+                        key={category}
+                        className="badge badge-outline badge-sm"
+                      >
                         {formatLabel(category)}
                       </span>
                     ))}
@@ -172,7 +191,9 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
               <section className="flex flex-col gap-3">
                 <h2 className="text-xl font-semibold">Method</h2>
 
-                <p className="leading-relaxed text-base-content/80">{recipe.description}</p>
+                <p className="leading-relaxed text-base-content/80">
+                  {recipe.description}
+                </p>
               </section>
             </div>
           </div>
