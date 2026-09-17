@@ -21,17 +21,11 @@ function CreateRecipe() {
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
-  const handleCreateRecipe = async (
-    prevState: RecipeState,
-    formData: FormData,
-  ): Promise<RecipeState> => {
+  const handleCreateRecipe = async (prevState: RecipeState, formData: FormData): Promise<RecipeState> => {
     return await createRecipe(prevState, formData);
   };
 
-  const [state, formAction, isPending] = useActionState(
-    handleCreateRecipe,
-    null,
-  );
+  const [state, formAction, isPending] = useActionState(handleCreateRecipe, null);
 
   useEffect(() => {
     if (state?.success) {
