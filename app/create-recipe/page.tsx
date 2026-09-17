@@ -1,13 +1,25 @@
 "use client";
 
 import { createRecipe, RecipeState } from "@/dbQueries";
-import React, { useActionState, useEffect, useState } from "react";
+import {
+  CATEGORY_GROUPS,
+  getCategoryGroup,
+  REQUIRED_CATEGORY_GROUP,
+} from "@/lib/recipe";
+import {
+  type SyntheticEvent,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 function CreateRecipe() {
   const router = useRouter();
   const [ingredient, setIngredient] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredientsError, setIngredientsError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const handleCreateRecipe = async (prevState: RecipeState, formData: FormData): Promise<RecipeState> => {
     return await createRecipe(prevState, formData);
@@ -21,123 +33,230 @@ function CreateRecipe() {
     }
   }, [state, router]);
 
+  const addIngredient = () => {
+    if (!ingredient.trim()) return;
+    setIngredients([...ingredients, ingredient.trim()]);
+    setIngredient("");
+    setIngredientsError(null);
+  };
+
+  const removeIngredient = (index: number) => {
+    setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
+    // Native `required` covers the plain text/number fields. Ingredients and
+    // categories are both submitted as repeated fields (hidden inputs /
+    // checkboxes sharing a name), which `required` can't express as "at
+    // least one of these" -- so that's checked here instead.
+    if (ingredients.length === 0) {
+      event.preventDefault();
+      setIngredientsError("Add at least one ingredient.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const selectedCategories = formData.getAll("categories").map(String);
+    const hasRequiredGroup = selectedCategories.some(
+      (category) => getCategoryGroup(category) === REQUIRED_CATEGORY_GROUP,
+    );
+    if (!hasRequiredGroup) {
+      event.preventDefault();
+      setCategoryError("Select at least one meal or course type.");
+      return;
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center my-12 mx-auto max-w-9/10 w-fit border rounded-xl">
-      <p className="w-fit">Create Your Recipe</p>
-      <form action={formAction} className="flex flex-col items-center">
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="name" className="cursor-pointer">
-            Recipe Name:
-          </label>
-          <input id="name" name="name" type="text" placeholder="Your recipe name" />
-        </div>
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="description" className="cursor-pointer">
-            Recipe Description:
-          </label>
-          <input id="description" name="description" type="text" placeholder="Describe your recipe here" />
-        </div>
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="snippet" className="cursor-pointer">
-            Short Description:
-          </label>
-          <input id="snippet" name="snippet" type="text" placeholder="Give a short recipe description" />
-        </div>
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="time" className="cursor-pointer">
-            Prep / Cook Time (Minutes):
-          </label>
-          <input id="time" name="time" type="number" placeholder="45" />
-        </div>
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="ingredients" className="cursor-pointer">
-            Ingredients:
-          </label>
-          <input type="text" value={ingredient} onChange={(e) => setIngredient(e.target.value)} placeholder="Tomato" />
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Create a recipe
+        </h1>
+        <p className="text-sm text-base-content/70">
+          Share your own recipe with the collection — fill in the details below.
+        </p>
+      </header>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (!ingredient.trim()) return;
-
-              setIngredients([...ingredients, ingredient.trim()]);
-              setIngredient("");
-            }}
-            className="btn btn-primary btn-sm my-2 w-32"
-          >
-            Add Ingredient
-          </button>
-
-          {ingredients.map((ingredient, index) => (
-            <input key={index} type="hidden" name="ingredients" value={ingredient} />
-          ))}
-        </div>
-        <div className="flex flex-col w-9/10 my-2">
-          <label htmlFor="image" className="cursor-pointer">
-            Image:
-          </label>
-          <input id="image" name="image_url" type="text" placeholder="Image URL" />
+      <form
+        action={formAction}
+        onSubmit={handleSubmit}
+        className="card flex flex-col gap-5 bg-base-200 p-6 shadow-md sm:p-8"
+      >
+        <div className="flex flex-col gap-1">
+          <label htmlFor="name" className="text-sm font-semibold">
+            Recipe name<span className="ml-1 text-error">*</span>
+          </label>{" "}
+          <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Your recipe name"
+            required
+            className="input input-bordered w-full"
+          />
         </div>
 
-        <div className="flex flex-col w-9/10 my-2">
-          <p>Categories:</p>
-          <div className="flex justify-center flex-wrap">
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="breakfast" className="mr-1" />
-              Breakfast
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="lunch" className="mr-1" />
-              Lunch
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="dinner" className="mr-1" />
-              Dinner
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="dessert" className="mr-1" />
-              Dessert
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="vegetarian" className="mr-1" />
-              Vegetarian
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="vegan" className="mr-1" />
-              Vegan
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="beef" className="mr-1" />
-              Beef
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="fish" className="mr-1" />
-              Fish
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="chicken" className="mr-1" />
-              Chicken
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="sweet" className="mr-1" />
-              Sweet
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="salty" className="mr-1" />
-              Salty
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="fast" className="mr-1" />
-              Fast
-            </label>
-            <label className="mx-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="takesTime" className="mr-1" />
-              Takes Time
-            </label>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="description" className="text-sm font-semibold">
+            Description<span className="ml-1 text-error">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            placeholder="Describe your recipe here"
+            rows={4}
+            required
+            className="textarea textarea-bordered w-full"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="snippet" className="text-sm font-semibold">
+            Short description<span className="ml-1 text-error">*</span>
+          </label>
+          <input
+            id="snippet"
+            name="snippet"
+            type="text"
+            placeholder="Give a short recipe description"
+            required
+            className="input input-bordered w-full"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="time" className="text-sm font-semibold">
+            Prep / cook time (minutes)<span className="ml-1 text-error">*</span>
+          </label>
+          <input
+            id="time"
+            name="time"
+            type="number"
+            placeholder="45"
+            required
+            className="input input-bordered w-full sm:w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="ingredient" className="text-sm font-semibold">
+            Ingredients<span className="ml-1 text-error">*</span>
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="ingredient"
+              type="text"
+              value={ingredient}
+              onChange={(event) => setIngredient(event.target.value)}
+              placeholder="Tomato"
+              className="input input-bordered w-full"
+            />
+            <button
+              type="button"
+              onClick={addIngredient}
+              className="btn btn-primary btn-sm shrink-0"
+            >
+              Add
+            </button>
           </div>
+
+          {ingredients.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {ingredients.map((item, index) => (
+                <span
+                  key={`${item}-${index}`}
+                  className="badge badge-outline gap-2"
+                >
+                  {item}
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(index)}
+                    aria-label={`Remove ${item}`}
+                    className="text-base-content/60 hover:text-error"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {ingredients.map((item, index) => (
+            <input
+              key={`hidden-${item}-${index}`}
+              type="hidden"
+              name="ingredients"
+              value={item}
+            />
+          ))}
+
+          {ingredientsError && (
+            <p className="text-sm text-error">{ingredientsError}</p>
+          )}
         </div>
-        <button type="submit" disabled={isPending} className="btn btn-primary btn-sm my-2 w-32">
-          Send Recipe
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="image" className="text-sm font-semibold">
+            Image URL<span className="ml-1 text-error">*</span>
+          </label>
+          <input
+            id="image"
+            name="image_url"
+            type="text"
+            placeholder="Image URL"
+            required
+            className="input input-bordered w-full"
+          />
+        </div>
+
+        <div
+          onChange={() => setCategoryError(null)}
+          className="flex flex-col gap-4"
+        >
+          {CATEGORY_GROUPS.map((group) => (
+            <div key={group.name} className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">
+                {group.name}
+                {group.name === REQUIRED_CATEGORY_GROUP && (
+                  <span className="ml-1 text-error">*</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {group.options.map(({ value, label }) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      name="categories"
+                      value={value}
+                      className="checkbox checkbox-sm"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+          {categoryError && (
+            <p className="text-sm text-error">{categoryError}</p>
+          )}
+        </div>
+
+        {state && !state.success && state.message && (
+          <div role="alert" className="alert alert-error">
+            <span>{state.message}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="btn btn-primary w-full"
+        >
+          {isPending ? "Saving…" : "Send Recipe"}
         </button>
       </form>
     </div>
