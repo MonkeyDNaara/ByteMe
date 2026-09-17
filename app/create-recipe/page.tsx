@@ -3,7 +3,6 @@
 import { createRecipe, RecipeState } from "@/dbQueries";
 import React, { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Metadata } from "next";
 
 function CreateRecipe() {
   const router = useRouter();
@@ -146,7 +145,3 @@ function CreateRecipe() {
 }
 
 export default CreateRecipe;
-
-export const metadata: Metadata = {
-  title: "Create Recipe",
-};

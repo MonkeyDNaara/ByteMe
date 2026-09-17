@@ -21,7 +21,7 @@ type RecipeCardProps = {
   href?: string;
 };
 
-export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
+export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = () => {
@@ -31,7 +31,7 @@ export default function RecipeCard({ meal, recipe }: RecipeCardProps) {
         recipeModal: recipe.id,
       },
       "",
-      window.location.href,
+      href ?? window.location.href,
     );
 
     setIsOpen(true);
