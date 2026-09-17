@@ -1,6 +1,8 @@
 import RecipeFilters from "@/app/components/RecipeFilters";
 import { getRecipes, searchRecipes } from "@/dbQueries";
 import SearchBar from "./SearchBar";
+import { getAllRecipes } from "@/lib/recipe";
+import type { Metadata } from "next";
 
 export default async function AllRecipesPage({
   searchParams,
@@ -29,7 +31,7 @@ export default async function AllRecipesPage({
 
       {recipes.length === 0 ? (
         <p className="rounded-box bg-base-200 px-6 py-10 text-center text-base-content/70">
-          No recipes match your search.
+          No recipes yet.
         </p>
       ) : (
         <RecipeFilters recipes={recipes} />
@@ -37,3 +39,7 @@ export default async function AllRecipesPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "All Recipes",
+};
