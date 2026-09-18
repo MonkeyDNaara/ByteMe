@@ -27,7 +27,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      {/* overflow-x-hidden guards against full-bleed sections that break out
+          of their container with a `100vw` width trick (e.g. the homepage's
+          welcome banner) -- viewport-width vs. scrollbar-width mismatches on
+          some browsers can otherwise introduce a page-wide horizontal
+          scrollbar. */}
+      <body className="flex min-h-full flex-col overflow-x-hidden">
         <Header />
 
         <div className="relative flex flex-1 flex-col">

@@ -30,6 +30,15 @@ type RecipeCardProps = {
 
 export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // Optimistic local count so the card/modal update immediately when the
+  // favourite button is pressed, instead of only reflecting the DB's real
+  // value on the next full render. The actual write is still best-effort
+  // (see FavoriteButton/setRecipeLiked) -- this just mirrors it visually.
+  const [likes, setLikes] = useState(recipe.likes);
+
+  const handleFavoriteToggle = (isFavorite: boolean) => {
+    setLikes((current) => Math.max(current + (isFavorite ? 1 : -1), 0));
+  };
 
   const openModal = () => {
     window.history.pushState(
@@ -119,7 +128,7 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
             very different content lengths. */}
         <div className="card-actions mt-auto items-center justify-between text-sm text-base-content/70">
           <span>⏱ {recipe.time} min</span>
-          <span>❤ {recipe.likes}</span>
+          <span>❤ {likes}</span>
         </div>
       </div>
     </>
@@ -128,11 +137,15 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   return (
     <>
       <article
-        className="group card relative overflow-hidden border border-primary/20 bg-base-200 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+        className="group card relative cursor-pointer overflow-hidden border border-primary/20 bg-base-200 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
         onClick={openModal}
       >
         <div onClick={(event) => event.stopPropagation()}>
-          <FavoriteButton recipeId={String(recipe.id)} className="absolute right-3 top-3 z-10" />
+          <FavoriteButton
+            recipeId={String(recipe.id)}
+            className="absolute right-3 top-3 z-10"
+            onToggle={handleFavoriteToggle}
+          />
         </div>
 
         {content}
@@ -172,14 +185,18 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 <div className="flex items-start justify-between gap-4">
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{recipe.name}</h1>
 
-                  <FavoriteButton recipeId={String(recipe.id)} size="md" />
+                  <FavoriteButton
+                    recipeId={String(recipe.id)}
+                    size="md"
+                    onToggle={handleFavoriteToggle}
+                  />
                 </div>
 
                 <p className="text-base-content/80">{recipe.snippet}</p>
 
                 <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
                   <span>⏱ {recipe.time} min</span>
-                  <span>❤ {recipe.likes} likes</span>
+                  <span>❤ {likes} likes</span>
                 </div>
 
                 {recipe.difficulty != null && (
@@ -229,6 +246,17 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
                 <p className="leading-relaxed text-base-content/80">{recipe.description}</p>
               </section>
+
+              <div className="flex justify-center">
+                <a
+                  href="https://leetcode.com/problemset/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                >
+                  Start cooking (for real software developer)
+                </a>
+              </div>
             </div>
           </div>
         </div>

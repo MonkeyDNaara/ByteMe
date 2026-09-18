@@ -3,10 +3,6 @@ import Link from "next/link";
 import RecipeCard from "@/app/components/RecipeCard";
 import { getRecipesOfTheDay } from "@/lib/recipe";
 
-// Re-run on every request so getRecipesOfTheDay() (deterministic per UTC
-// day) can notice a new day has started -- without this the page would be
-// statically prerendered once and stay frozen at whatever "today" was at
-// build/deploy time.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
@@ -14,9 +10,19 @@ export default async function Home() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-10 sm:px-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          byteMe
+        </h1>
+        <p className="max-w-2xl text-sm text-base-content/70">
+          Your daily kitchen companion. Discover recipes, cook with step-by-step
+          timers, and keep your favorites organized.
+        </p>
+      </header>
+
       <section className="flex flex-col gap-5">
         <div className="flex items-end justify-between">
-          <h3 className="text-2xl font-semibold">Recipes of the day</h3>
+          <h2 className="text-2xl font-semibold">Recipes of the day</h2>
           <span className="hidden text-sm text-base-content/60 sm:inline">
             Updated daily
           </span>
@@ -40,9 +46,19 @@ export default async function Home() {
         )}
       </section>
 
-      <section className="relative left-1/2 right-1/2 mt-16 -mx-[50vw] w-[100vw] bg-base-200 shadow-md">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <h2 className="mt-32 mb-12 text-center text-4xl font-bold font-serif">
+      <section className="flex flex-col items-center gap-3 rounded-box bg-base-300 px-6 py-10 text-center">
+        <h2 className="text-xl font-semibold">Can&apos;t decide?</h2>
+        <p className="max-w-md text-sm text-base-content/70">
+          Let us pick a random recipe for you from the whole collection.
+        </p>
+        <Link href="/recipe/random" className="btn btn-primary">
+          Surprise Me
+        </Link>
+      </section>
+
+      <section className="relative -mx-[50vw] left-1/2 right-1/2 w-[100vw] bg-base-200 shadow-md">
+        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 className="mb-8 text-center text-3xl font-bold sm:text-4xl">
             ✨🍱 Welcome to YOUR new Kitchen! 🍳✨
           </h2>
           <p className="my-4">
@@ -94,12 +110,12 @@ export default async function Home() {
             the way make the best stories.
           </p>
           <p className="my-4">
-            Maybe you are here because you simply need an idea for tonight's
-            dinner. Maybe you want to try baking your first cake, discover a new
-            vegetarian dish, surprise your friends with something homemade, or
-            challenge yourself with a recipe that takes a little more time.
-            Whatever brought you here, we hope you find something that makes you
-            want to head into the kitchen and give it a try.
+            Maybe you are here because you simply need an idea for
+            tonight&apos;s dinner. Maybe you want to try baking your first cake,
+            discover a new vegetarian dish, surprise your friends with something
+            homemade, or challenge yourself with a recipe that takes a little
+            more time. Whatever brought you here, we hope you find something
+            that makes you want to head into the kitchen and give it a try.
           </p>
           <p className="my-4">
             Because at the end of the day, cooking and baking are about one
@@ -110,7 +126,7 @@ export default async function Home() {
             So take a look around, pick a recipe that catches your attention,
             and give it a shot.{" "}
           </p>
-          <p className="text-center mt-12 mb-16">
+          <p className="mt-12 text-center">
             {" "}
             <strong>
               Roll up your sleeves, turn on the oven, sharpen those knives — and
@@ -118,16 +134,6 @@ export default async function Home() {
             </strong>
           </p>
         </div>
-      </section>
-
-      <section className="flex flex-col items-center gap-3 rounded-box bg-base-300 px-6 py-10 text-center">
-        <h3 className="text-xl font-semibold">Can&apos;t decide?</h3>
-        <p className="max-w-md text-sm text-base-content/70">
-          Let us pick a random recipe for you from the whole collection.
-        </p>
-        <Link href="/recipe/random" className="btn btn-primary">
-          Surprise Me
-        </Link>
       </section>
     </div>
   );
