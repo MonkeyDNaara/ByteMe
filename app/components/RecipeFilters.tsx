@@ -23,6 +23,50 @@ export type RecipeFiltersProps = {
   recipes: Recipe[];
 };
 
+type SortOption = "newest" | "time" | "difficulty" | "likes" | "alphabetical";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: "Newest first",
+  time: "Time (quickest first)",
+  difficulty: "Difficulty (easiest first)",
+  likes: "Most liked",
+  alphabetical: "Alphabetical (A–Z)",
+};
+
+/**
+ * Kept local to this component rather than lib/recipe.ts (unlike
+ * filterRecipes/getTimeBounds etc.) since it's not needed anywhere else.
+ * "newest" uses `Number(id)` as a proxy for creation order -- ids are
+ * assigned sequentially by the DB and the validated `Recipe` type doesn't
+ * carry a real timestamp. For "difficulty", unrated recipes (`null`) are
+ * always sorted to the end -- they aren't comparable to a rated one.
+ */
+function sortRecipes(recipes: Recipe[], sortOption: SortOption): Recipe[] {
+  const sorted = [...recipes];
+  switch (sortOption) {
+    case "newest":
+      sorted.sort((a, b) => Number(b.id) - Number(a.id));
+      break;
+    case "time":
+      sorted.sort((a, b) => a.time - b.time);
+      break;
+    case "difficulty":
+      sorted.sort((a, b) => {
+        if (a.difficulty == null) return b.difficulty == null ? 0 : 1;
+        if (b.difficulty == null) return -1;
+        return a.difficulty - b.difficulty;
+      });
+      break;
+    case "likes":
+      sorted.sort((a, b) => b.likes - a.likes);
+      break;
+    case "alphabetical":
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+  }
+  return sorted;
+}
+
 export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
   const allCategories = useMemo(
     () => getDistinctCategories(recipes),
@@ -60,10 +104,11 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set(),
   );
-  const [selectedDifficulties, setSelectedDifficulties] = useState<
-    Set<number>
-  >(new Set());
+  const [selectedDifficulties, setSelectedDifficulties] = useState<Set<number>>(
+    new Set(),
+  );
   const [timeRange, setTimeRange] = useState<TimeRange>(bounds);
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
 
   const toggleCategory = (category: string) => {
     const key = category.toLowerCase();
@@ -117,6 +162,11 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         difficulties: [...selectedDifficulties],
       }),
     [recipes, selectedCategories, selectedDifficulties, timeRange],
+  );
+
+  const sorted = useMemo(
+    () => sortRecipes(filtered, sortOption),
+    [filtered, sortOption],
   );
 
   const isFullTimeRange =
@@ -290,9 +340,7 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
                         checked={active}
                         onChange={() => toggleDifficulty(level)}
                       />
-                      <span aria-hidden>
-                        {DIFFICULTY_EMOJI.repeat(level)}
-                      </span>
+                      <span aria-hidden>{DIFFICULTY_EMOJI.repeat(level)}</span>
                       <span>{DIFFICULTY_LABELS[level as DifficultyLevel]}</span>
                     </label>
                   );
@@ -311,6 +359,23 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
             Clear filters
           </button>
         )}
+
+        <label className="ml-auto flex items-center gap-2 whitespace-nowrap text-sm text-base-content/70">
+          Sort by
+          <select
+            value={sortOption}
+            onChange={(event) =>
+              setSortOption(event.target.value as SortOption)
+            }
+            className="select select-bordered select-sm"
+          >
+            {Object.entries(SORT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <p className="text-sm text-base-content/60">
@@ -323,7 +388,7 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((recipe) => (
+          {sorted.map((recipe) => (
             <RecipeCard
               key={recipe.id}
               recipe={recipe}

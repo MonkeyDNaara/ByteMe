@@ -56,7 +56,7 @@ export default async function Home() {
         </Link>
       </section>
 
-      <section className="relative -mx-[50vw] left-1/2 right-1/2 w-[100vw] bg-base-200 shadow-md">
+      <section className="relative mx-[50vw] left-1/2 right-1/2 w-screen bg-base-200 shadow-md">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
           <h2 className="mb-8 text-center text-3xl font-bold sm:text-4xl">
             ✨🍱 Welcome to YOUR new Kitchen! 🍳✨
