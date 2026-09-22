@@ -21,7 +21,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
         description: recipe.description,
         snippet: recipe.snippet,
         time: recipe.time,
-        ingredients: recipe.ingredients,
+        ingredients: recipe.ingredientDetails,
         categories: recipe.categories,
         image_url: recipe.image_url,
         difficulty: recipe.difficulty,

@@ -3,15 +3,42 @@ import z from "zod";
 import {
   getRecipeById as dbGetRecipeById,
   getRecipes as dbGetRecipes,
+  searchRecipes as dbSearchRecipes,
 } from "@/dbQueries";
+import { INGREDIENT_UNITS } from "@/lib/ingredientUnits";
+
+export { INGREDIENT_UNITS };
+
+export const IngredientDetail = z.object({
+  name: z.string(),
+  amount: z.number().nullable(),
+  unit: z.string(),
+});
+
+export type IngredientDetail = z.infer<typeof IngredientDetail>;
+
+/** Renders a structured ingredient back into a display string, e.g. "300 g shrimp", "2 eggs" (no unit), or "garlic" (no amount at all). */
+export function formatIngredientLine(detail: IngredientDetail): string {
+  const parts: string[] = [];
+  if (detail.amount != null) {
+    parts.push(String(detail.amount));
+    if (detail.unit) parts.push(detail.unit);
+  }
+  parts.push(detail.name);
+  return parts.join(" ");
+}
 
 export const Recipe = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   snippet: z.string(),
-  time: z.number(),
+  // Formatted display strings (e.g. "300 g shrimp"), derived from
+  // `ingredientDetails` below -- kept so existing display code (recipe
+  // cards, the detail page) doesn't need to change.
   ingredients: z.array(z.string()),
+  ingredientDetails: z.array(IngredientDetail),
+  time: z.number(),
   categories: z.array(z.string()),
   image_url: z.string().min(1),
   likes: z.number(),
@@ -66,13 +93,26 @@ export function isRecipeOwner(
 // ---------------------------------------------------------------------------
 
 function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
+  // `ingredient_details` comes from a json_agg subquery; most drivers parse
+  // `json`/`jsonb` columns into a real JS array automatically, but this
+  // guards against a driver that instead hands back the raw JSON string.
+  const rawDetails =
+    typeof row.ingredient_details === "string"
+      ? JSON.parse(row.ingredient_details)
+      : (row.ingredient_details ?? []);
+  const ingredientDetails = (Array.isArray(rawDetails) ? rawDetails : [])
+    .map((detail) => IngredientDetail.safeParse(detail))
+    .filter((parsed) => parsed.success)
+    .map((parsed) => parsed.data);
+
   const result = Recipe.safeParse({
     id: String(row.id),
     name: row.name,
     description: row.description ?? "",
     snippet: row.snippet ?? "",
     time: row.time ?? 0,
-    ingredients: row.ingredients ?? [],
+    ingredients: ingredientDetails.map(formatIngredientLine),
+    ingredientDetails,
     categories: row.categories ?? [],
     image_url: row.image_url ?? "",
     likes: row.likes ?? 0,
@@ -94,6 +134,14 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
 /** Returns every recipe. */
 export async function getAllRecipes(): Promise<Recipe[]> {
   const rows = await dbGetRecipes();
+  return rows
+    .map((row) => mapRowToRecipe(row))
+    .filter((recipe): recipe is Recipe => recipe !== null);
+}
+
+/** Recipes whose name matches `query` (case-insensitive substring). */
+export async function searchRecipes(query: string): Promise<Recipe[]> {
+  const rows = await dbSearchRecipes(query);
   return rows
     .map((row) => mapRowToRecipe(row))
     .filter((recipe): recipe is Recipe => recipe !== null);

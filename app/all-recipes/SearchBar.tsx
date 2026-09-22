@@ -1,6 +1,6 @@
 "use client";
 
-import { Recipe } from "@/dbQueries";
+import type { Recipe } from "@/lib/recipe";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
