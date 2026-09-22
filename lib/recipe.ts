@@ -16,6 +16,8 @@ export const Recipe = z.object({
   image_url: z.string().min(1),
   likes: z.number(),
   difficulty: z.number().int().min(1).max(5).nullable(),
+  user_id: z.string().nullable(),
+  author_name: z.string().nullable(),
 });
 
 export type Recipe = z.infer<typeof Recipe>;
@@ -46,6 +48,14 @@ export function formatLabel(value: string): string {
     : value;
 }
 
+/** Whether the given (possibly logged-out) user id owns this recipe. Recipes made before ownership existed have `user_id: null` and so have no owner. */
+export function isRecipeOwner(
+  recipe: Pick<Recipe, "user_id">,
+  userId: string | null | undefined,
+): boolean {
+  return userId != null && recipe.user_id === userId;
+}
+
 // ---------------------------------------------------------------------------
 // Data layer, backed by the Neon Postgres `recipes` table via dbQueries.ts.
 // Raw rows use different field names (snippet, ingredients, categories,
@@ -67,6 +77,8 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
     image_url: row.image_url ?? "",
     likes: row.likes ?? 0,
     difficulty: row.difficulty ?? null,
+    user_id: row.user_id ?? null,
+    author_name: row.author_name ?? null,
   });
 
   if (!result.success) {

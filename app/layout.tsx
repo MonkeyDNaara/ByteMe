@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import PixelReveal from "./components/PixelReveal";
+import { auth } from "@/lib/auth/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,10 @@ export const metadata: Metadata = {
   description: "Discover, save and share recipes",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const { data: session } = await auth.getSession();
+  const user = session?.user ? { name: session.user.name } : null;
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       {/* overflow-x-hidden guards against full-bleed sections that break out
@@ -33,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           some browsers can otherwise introduce a page-wide horizontal
           scrollbar. */}
       <body className="flex min-h-full flex-col overflow-x-hidden">
-        <Header />
+        <Header user={user} />
 
         <div className="relative flex flex-1 flex-col">
           <PixelReveal />

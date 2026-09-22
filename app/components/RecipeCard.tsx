@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
+import { authClient } from "@/lib/auth/client";
 import {
   DIFFICULTY_EMOJI,
   formatLabel,
   getDifficultyLabel,
   isOptimizableImageUrl,
+  isRecipeOwner,
   type MealType,
   type Recipe,
 } from "@/lib/recipe";
@@ -29,11 +34,15 @@ type RecipeCardProps = {
 };
 
 export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  const isOwner = isRecipeOwner(recipe, session?.user?.id);
   // Optimistic local count so the card/modal update immediately when the
   // favourite button is pressed, instead of only reflecting the DB's real
   // value on the next full render. The actual write is still best-effort
-  // (see FavoriteButton/setRecipeLiked) -- this just mirrors it visually.
+  // (see FavoriteButton/lib/useFavorites.ts's setFavorite) -- this just
+  // mirrors it visually; the real count is derived from the favorites table.
   const [likes, setLikes] = useState(recipe.likes);
 
   const handleFavoriteToggle = (isFavorite: boolean) => {
@@ -194,6 +203,12 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
 
                 <p className="text-base-content/80">{recipe.snippet}</p>
 
+                {recipe.author_name && (
+                  <p className="text-sm text-base-content/60">
+                    by {recipe.author_name}
+                  </p>
+                )}
+
                 <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
                   <span>⏱ {recipe.time} min</span>
                   <span>❤ {likes} likes</span>
@@ -227,6 +242,24 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                         {formatLabel(category)}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {isOwner && (
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/recipe/${recipe.id}/edit`}
+                      className="btn btn-outline btn-sm"
+                    >
+                      Edit
+                    </Link>
+                    <DeleteRecipeButton
+                      recipeId={Number(recipe.id)}
+                      onDeleted={() => {
+                        closeModal();
+                        router.refresh();
+                      }}
+                    />
                   </div>
                 )}
               </header>
