@@ -1,15 +1,21 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import BackButton from "@/app/components/BackButton";
+import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
+import { auth } from "@/lib/auth/server";
 import {
   DIFFICULTY_EMOJI,
   formatLabel,
   getDifficultyLabel,
   getRecipeById,
   isOptimizableImageUrl,
+  isRecipeOwner,
 } from "@/lib/recipe";
+
+export const dynamic = "force-dynamic";
 
 export default async function RecipeDetailPage({
   params,
@@ -20,6 +26,9 @@ export default async function RecipeDetailPage({
   if (!recipe) {
     notFound();
   }
+
+  const { data: session } = await auth.getSession();
+  const isOwner = isRecipeOwner(recipe, session?.user?.id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6">
@@ -46,6 +55,12 @@ export default async function RecipeDetailPage({
         </div>
 
         <p className="text-base-content/80">{recipe.snippet}</p>
+
+        {recipe.author_name && (
+          <p className="text-sm text-base-content/60">
+            by {recipe.author_name}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
           <span>⏱ {recipe.time} min</span>
@@ -78,6 +93,21 @@ export default async function RecipeDetailPage({
                 {formatLabel(category)}
               </span>
             ))}
+          </div>
+        )}
+
+        {isOwner && (
+          <div className="flex gap-2">
+            <Link
+              href={`/recipe/${recipe.id}/edit`}
+              className="btn btn-outline btn-sm"
+            >
+              Edit
+            </Link>
+            <DeleteRecipeButton
+              recipeId={Number(recipe.id)}
+              redirectTo="/all-recipes"
+            />
           </div>
         )}
       </header>

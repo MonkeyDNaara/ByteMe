@@ -27,6 +27,8 @@ export type Recipe = RecipeInput & {
   id: number;
   likes: number;
   created_at: Date;
+  user_id: string | null;
+  author_name: string | null;
 };
 
 export type RecipeState = {
@@ -34,20 +36,25 @@ export type RecipeState = {
   message?: string;
 } | null;
 
+// Every read that returns a `Recipe` joins in the author's display name from
+// Neon Auth's own `user` table (left join, since `user_id` is nullable --
+// recipes created before this feature, or via the seed script, have none).
 export const getRecipeById = async (id: number): Promise<Recipe[]> => {
   const result = await sql`
-    SELECT *
+    SELECT recipes.*, author.name AS author_name
     FROM recipes
-    WHERE id = ${id}
+    LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    WHERE recipes.id = ${id}
   `;
   return result as unknown as Recipe[];
 };
 
 export const getRecipes = async (): Promise<Recipe[]> => {
   const result = await sql`
-    SELECT *
+    SELECT recipes.*, author.name AS author_name
     FROM recipes
-    ORDER BY created_at DESC
+    LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    ORDER BY recipes.created_at DESC
   `;
 
   return result as unknown as Recipe[];
@@ -132,7 +139,8 @@ export const createRecipe = async (
         categories,
         image_url,
         likes,
-        difficulty
+        difficulty,
+        user_id
       )
       VALUES (
         ${recipe.name},
@@ -143,7 +151,8 @@ export const createRecipe = async (
         ${recipe.categories},
         ${recipe.image_url},
         0,
-        ${recipe.difficulty}
+        ${recipe.difficulty},
+        ${session.user.id}
       )
     `;
 
@@ -158,9 +167,47 @@ export const createRecipe = async (
   }
 };
 
-export const updateRecipe = async (id: number, recipe: RecipeInput) => {
+// Shaped as a `(prevState, formData)` action so a caller can bind the id
+// (`updateRecipe.bind(null, id)`) and pass the result straight to
+// `useActionState`, the same way `createRecipe` already works.
+export const updateRecipe = async (
+  id: number,
+  prevState: RecipeState,
+  formData: FormData,
+): Promise<RecipeState> => {
+  const { data: session } = await auth.getSession();
+  if (!session?.user) {
+    return {
+      success: false,
+      message: "You must be signed in to edit a recipe",
+    };
+  }
+
+  const result = recipeSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+    snippet: formData.get("snippet"),
+    time: formData.get("time"),
+    ingredients: formData.getAll("ingredients"),
+    categories: formData.getAll("categories"),
+    image_url: formData.get("image_url"),
+    difficulty: formData.get("difficulty"),
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      message: result.error.issues[0]?.message ?? "Invalid recipe data",
+    };
+  }
+
+  const recipe = result.data;
+
   try {
-    await sql`
+    // `AND user_id = ...` in the WHERE clause (rather than a separate
+    // ownership lookup beforehand) makes the check atomic: a non-owner's
+    // request just matches zero rows instead of racing a check-then-act.
+    const updated = await sql`
       UPDATE recipes
       SET
         name = ${recipe.name},
@@ -171,38 +218,72 @@ export const updateRecipe = async (id: number, recipe: RecipeInput) => {
         categories = ${recipe.categories},
         image_url = ${recipe.image_url},
         difficulty = ${recipe.difficulty}
-      WHERE id = ${id}
+      WHERE id = ${id} AND user_id = ${session.user.id}
+      RETURNING id
     `;
+
+    if (updated.length === 0) {
+      return {
+        success: false,
+        message: "You can only edit recipes you created",
+      };
+    }
 
     return { success: true };
   } catch (error) {
     console.error("Database Error:", error);
 
-    return { success: false };
+    return { success: false, message: "Failed to update recipe" };
   }
 };
 
-export const deleteRecipe = async (id: number) => {
+// prevState/formData are unused (delete needs no form fields) but kept as
+// named params so `deleteRecipe.bind(null, id)` still matches the
+// `(prevState, formData)` shape `useActionState` requires.
+export const deleteRecipe = async (
+  id: number,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  prevState: RecipeState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  formData: FormData,
+): Promise<RecipeState> => {
+  const { data: session } = await auth.getSession();
+  if (!session?.user) {
+    return {
+      success: false,
+      message: "You must be signed in to delete a recipe",
+    };
+  }
+
   try {
-    await sql`
+    const deleted = await sql`
       DELETE FROM recipes
-      WHERE id = ${id}
+      WHERE id = ${id} AND user_id = ${session.user.id}
+      RETURNING id
     `;
+
+    if (deleted.length === 0) {
+      return {
+        success: false,
+        message: "You can only delete recipes you created",
+      };
+    }
 
     return { success: true };
   } catch (error) {
     console.error("Database Error:", error);
 
-    return { success: false };
+    return { success: false, message: "Failed to delete recipe" };
   }
 };
 
 export const searchRecipes = async (search: string): Promise<Recipe[]> => {
   const result = sql`
-    SELECT *
+    SELECT recipes.*, author.name AS author_name
     FROM recipes
-    WHERE name ILIKE ${`%${search}%`}
-    ORDER BY created_at DESC
+    LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    WHERE recipes.name ILIKE ${`%${search}%`}
+    ORDER BY recipes.created_at DESC
   `;
 
   return result as unknown as Recipe[];
