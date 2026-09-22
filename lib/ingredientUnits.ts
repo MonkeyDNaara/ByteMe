@@ -12,7 +12,6 @@ export const INGREDIENT_UNITS = [
   "tsp",
   "tbsp",
   "cup",
-  "piece",
   "clove",
   "slice",
   "pinch",

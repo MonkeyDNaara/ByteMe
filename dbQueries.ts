@@ -197,6 +197,111 @@ export const importFavorites = async (
   `;
 };
 
+// ---------------------------------------------------------------------------
+// Shopping list: which recipes a user has added (shopping_list_recipes,
+// shaped identically to favorites), plus the checked/unchecked state of an
+// aggregated ingredient line (shopping_list_checked_items). A checked line is
+// keyed by (name, unit) rather than by recipe_ingredients row, since the
+// aggregate itself is keyed that way -- the same ingredient can come from
+// more than one recipe on the list.
+// ---------------------------------------------------------------------------
+
+export const getShoppingListRecipeIds = async (
+  userId: string,
+): Promise<number[]> => {
+  const rows = await sql`
+    SELECT recipe_id FROM shopping_list_recipes WHERE user_id = ${userId}
+  `;
+  return (rows as { recipe_id: number }[]).map((row) => row.recipe_id);
+};
+
+export const addToShoppingList = async (userId: string, recipeId: number) => {
+  await sql`
+    INSERT INTO shopping_list_recipes (user_id, recipe_id)
+    VALUES (${userId}, ${recipeId})
+    ON CONFLICT (user_id, recipe_id) DO NOTHING
+  `;
+};
+
+export const removeFromShoppingList = async (
+  userId: string,
+  recipeId: number,
+) => {
+  await sql`
+    DELETE FROM shopping_list_recipes
+    WHERE user_id = ${userId} AND recipe_id = ${recipeId}
+  `;
+};
+
+export type ShoppingListIngredient = {
+  name: string;
+  unit: string;
+  amount: number | null;
+};
+
+/**
+ * Ingredients for every recipe on the user's shopping list, summed by
+ * (name, unit). If any contributing row has no amount, the whole line's
+ * amount comes back `null` (rather than silently summing only the known
+ * ones) since a partial total would understate what's actually needed.
+ */
+export const getShoppingListIngredients = async (
+  userId: string,
+): Promise<ShoppingListIngredient[]> => {
+  const rows = await sql`
+    SELECT
+      ri.name,
+      ri.unit,
+      CASE WHEN bool_or(ri.amount IS NULL) THEN NULL ELSE SUM(ri.amount) END AS amount
+    FROM recipe_ingredients ri
+    JOIN shopping_list_recipes slr ON slr.recipe_id = ri.recipe_id
+    WHERE slr.user_id = ${userId}
+    GROUP BY ri.name, ri.unit
+    ORDER BY ri.name
+  `;
+  // `SUM` on a numeric column comes back as a string (the driver avoids
+  // silently losing precision on large values), so it's parsed back to a
+  // number here rather than trusting the raw row shape.
+  return (
+    rows as { name: string; unit: string; amount: string | null }[]
+  ).map((row) => ({
+    name: row.name,
+    unit: row.unit,
+    amount: row.amount == null ? null : Number(row.amount),
+  }));
+};
+
+export type CheckedItemKey = { name: string; unit: string };
+
+export const getCheckedShoppingListItems = async (
+  userId: string,
+): Promise<CheckedItemKey[]> => {
+  const rows = await sql`
+    SELECT name, unit FROM shopping_list_checked_items WHERE user_id = ${userId}
+  `;
+  return rows as unknown as CheckedItemKey[];
+};
+
+export const setShoppingListItemChecked = async (
+  userId: string,
+  name: string,
+  unit: string,
+  checked: boolean,
+) => {
+  if (checked) {
+    await sql`
+      INSERT INTO shopping_list_checked_items (user_id, name, unit)
+      VALUES (${userId}, ${name}, ${unit})
+      ON CONFLICT (user_id, name, unit) DO NOTHING
+    `;
+  } else {
+    await sql`
+      DELETE FROM shopping_list_checked_items
+      WHERE user_id = ${userId} AND name = ${name} AND unit = ${unit}
+    `;
+  }
+};
+
 export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,

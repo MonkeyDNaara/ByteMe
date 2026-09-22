@@ -54,9 +54,7 @@ export default function RecipeForm({
   const [ingredients, setIngredients] = useState<IngredientDetail[]>(
     defaultValues?.ingredients ?? [],
   );
-  const [ingredientsError, setIngredientsError] = useState<string | null>(
-    null,
-  );
+  const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const [state, formAction, isPending] = useActionState(action, null);
@@ -69,9 +67,12 @@ export default function RecipeForm({
     const name = ingredientName.trim();
     if (!name) return;
 
-    const parsedAmount = ingredientAmount.trim() === "" ? null : Number(ingredientAmount);
+    const parsedAmount =
+      ingredientAmount.trim() === "" ? null : Number(ingredientAmount);
     const amount =
-      parsedAmount != null && Number.isFinite(parsedAmount) ? parsedAmount : null;
+      parsedAmount != null && Number.isFinite(parsedAmount)
+        ? parsedAmount
+        : null;
 
     setIngredients([...ingredients, { name, amount, unit: ingredientUnit }]);
     setIngredientName("");
@@ -108,9 +109,7 @@ export default function RecipeForm({
   };
 
   const selectedCategories = new Set(
-    (defaultValues?.categories ?? []).map((category) =>
-      category.toLowerCase(),
-    ),
+    (defaultValues?.categories ?? []).map((category) => category.toLowerCase()),
   );
 
   return (
@@ -190,7 +189,7 @@ export default function RecipeForm({
             min="0"
             value={ingredientAmount}
             onChange={(event) => setIngredientAmount(event.target.value)}
-            placeholder="Amount"
+            placeholder="2"
             aria-label="Ingredient amount"
             className="input input-bordered w-full sm:w-24"
           />
@@ -305,9 +304,7 @@ export default function RecipeForm({
             </div>
           </div>
         ))}
-        {categoryError && (
-          <p className="text-sm text-error">{categoryError}</p>
-        )}
+        {categoryError && <p className="text-sm text-error">{categoryError}</p>}
       </div>
 
       <div className="flex flex-col gap-1">

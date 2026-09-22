@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import BackButton from "@/app/components/BackButton";
 import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
+import ShoppingListButton from "@/app/components/ShoppingListButton";
 import { auth } from "@/lib/auth/server";
 import {
   DIFFICULTY_EMOJI,
@@ -51,7 +52,10 @@ export default async function RecipeDetailPage({
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {recipe.name}
           </h1>
-          <FavoriteButton recipeId={recipe.id} size="md" />
+          <div className="flex items-center gap-2">
+            <ShoppingListButton recipeId={recipe.id} size="md" />
+            <FavoriteButton recipeId={recipe.id} size="md" />
+          </div>
         </div>
 
         <p className="text-base-content/80">{recipe.snippet}</p>
