@@ -302,6 +302,88 @@ export const setShoppingListItemChecked = async (
   }
 };
 
+// ---------------------------------------------------------------------------
+// Shopping list: custom items, not tied to any recipe (e.g. "paper towels").
+// Unlike the recipe-derived aggregate, each custom item is its own uniquely
+// identified row from the moment it's created, so its checked state lives
+// directly on that row -- no separate checked-items table needed, since
+// there's no multi-recipe aggregation to key it by (name, unit) instead.
+// ---------------------------------------------------------------------------
+
+export type CustomShoppingListItem = {
+  id: number;
+  name: string;
+  amount: number | null;
+  unit: string;
+  checked: boolean;
+};
+
+function mapCustomItemRow(row: {
+  id: number;
+  name: string;
+  amount: string | number | null;
+  unit: string;
+  checked: boolean;
+}): CustomShoppingListItem {
+  return {
+    id: row.id,
+    name: row.name,
+    amount: row.amount == null ? null : Number(row.amount),
+    unit: row.unit,
+    checked: row.checked,
+  };
+}
+
+export const getCustomShoppingListItems = async (
+  userId: string,
+): Promise<CustomShoppingListItem[]> => {
+  const rows = await sql`
+    SELECT id, name, amount, unit, checked
+    FROM shopping_list_custom_items
+    WHERE user_id = ${userId}
+    ORDER BY created_at
+  `;
+  return (rows as Parameters<typeof mapCustomItemRow>[0][]).map(
+    mapCustomItemRow,
+  );
+};
+
+export const addCustomShoppingListItem = async (
+  userId: string,
+  name: string,
+  amount: number | null,
+  unit: string,
+): Promise<CustomShoppingListItem> => {
+  const [row] = await sql`
+    INSERT INTO shopping_list_custom_items (user_id, name, amount, unit)
+    VALUES (${userId}, ${name}, ${amount}, ${unit})
+    RETURNING id, name, amount, unit, checked
+  `;
+  return mapCustomItemRow(row as Parameters<typeof mapCustomItemRow>[0]);
+};
+
+export const removeCustomShoppingListItem = async (
+  userId: string,
+  itemId: number,
+) => {
+  await sql`
+    DELETE FROM shopping_list_custom_items
+    WHERE id = ${itemId} AND user_id = ${userId}
+  `;
+};
+
+export const setCustomShoppingListItemChecked = async (
+  userId: string,
+  itemId: number,
+  checked: boolean,
+) => {
+  await sql`
+    UPDATE shopping_list_custom_items
+    SET checked = ${checked}
+    WHERE id = ${itemId} AND user_id = ${userId}
+  `;
+};
+
 export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,

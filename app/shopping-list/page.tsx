@@ -1,11 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import CustomShoppingListSection from "@/app/shopping-list/CustomShoppingListSection";
 import RemoveFromShoppingListButton from "@/app/shopping-list/RemoveFromShoppingListButton";
 import ShoppingListItemRow from "@/app/shopping-list/ShoppingListItemRow";
 import { auth } from "@/lib/auth/server";
 import { getAllRecipes } from "@/lib/recipe";
-import { getMyShoppingListItems, getMyShoppingListRecipeIds } from "@/lib/shoppingList";
+import {
+  getMyCustomShoppingListItems,
+  getMyShoppingListItems,
+  getMyShoppingListRecipeIds,
+} from "@/lib/shoppingList";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +36,11 @@ export default async function ShoppingListPage() {
     );
   }
 
-  const [recipeIds, items, allRecipes] = await Promise.all([
+  const [recipeIds, items, allRecipes, customItems] = await Promise.all([
     getMyShoppingListRecipeIds(),
     getMyShoppingListItems(),
     getAllRecipes(),
+    getMyCustomShoppingListItems(),
   ]);
   const recipes = allRecipes.filter((recipe) => recipeIds.includes(recipe.id));
 
@@ -96,6 +102,8 @@ export default async function ShoppingListPage() {
           </ul>
         </section>
       )}
+
+      <CustomShoppingListSection initialItems={customItems} />
     </div>
   );
 }
