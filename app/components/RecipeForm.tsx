@@ -13,7 +13,10 @@ import {
   DIFFICULTY_EMOJI,
   DIFFICULTY_LABELS,
   DIFFICULTY_LEVELS,
+  formatIngredientLine,
   getCategoryGroup,
+  type IngredientDetail,
+  INGREDIENT_UNITS,
   REQUIRED_CATEGORY_GROUP,
 } from "@/lib/recipe";
 
@@ -22,7 +25,7 @@ export type RecipeFormValues = {
   description: string;
   snippet: string;
   time: number;
-  ingredients: string[];
+  ingredients: IngredientDetail[];
   categories: string[];
   image_url: string;
   difficulty: number | null;
@@ -45,13 +48,13 @@ export default function RecipeForm({
   pendingLabel,
   onSuccess,
 }: RecipeFormProps) {
-  const [ingredient, setIngredient] = useState("");
-  const [ingredients, setIngredients] = useState<string[]>(
+  const [ingredientName, setIngredientName] = useState("");
+  const [ingredientAmount, setIngredientAmount] = useState("");
+  const [ingredientUnit, setIngredientUnit] = useState("");
+  const [ingredients, setIngredients] = useState<IngredientDetail[]>(
     defaultValues?.ingredients ?? [],
   );
-  const [ingredientsError, setIngredientsError] = useState<string | null>(
-    null,
-  );
+  const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const [state, formAction, isPending] = useActionState(action, null);
@@ -61,9 +64,20 @@ export default function RecipeForm({
   }, [state, onSuccess]);
 
   const addIngredient = () => {
-    if (!ingredient.trim()) return;
-    setIngredients([...ingredients, ingredient.trim()]);
-    setIngredient("");
+    const name = ingredientName.trim();
+    if (!name) return;
+
+    const parsedAmount =
+      ingredientAmount.trim() === "" ? null : Number(ingredientAmount);
+    const amount =
+      parsedAmount != null && Number.isFinite(parsedAmount)
+        ? parsedAmount
+        : null;
+
+    setIngredients([...ingredients, { name, amount, unit: ingredientUnit }]);
+    setIngredientName("");
+    setIngredientAmount("");
+    setIngredientUnit("");
     setIngredientsError(null);
   };
 
@@ -95,9 +109,7 @@ export default function RecipeForm({
   };
 
   const selectedCategories = new Set(
-    (defaultValues?.categories ?? []).map((category) =>
-      category.toLowerCase(),
-    ),
+    (defaultValues?.categories ?? []).map((category) => category.toLowerCase()),
   );
 
   return (
@@ -170,12 +182,35 @@ export default function RecipeForm({
         <label htmlFor="ingredient" className="text-sm font-semibold">
           Ingredients<span className="ml-1 text-error">*</span>
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="number"
+            step="any"
+            min="0"
+            value={ingredientAmount}
+            onChange={(event) => setIngredientAmount(event.target.value)}
+            placeholder="2"
+            aria-label="Ingredient amount"
+            className="input input-bordered w-full sm:w-24"
+          />
+          <select
+            value={ingredientUnit}
+            onChange={(event) => setIngredientUnit(event.target.value)}
+            aria-label="Ingredient unit"
+            className="select select-bordered w-full sm:w-32"
+          >
+            <option value="">(no unit)</option>
+            {INGREDIENT_UNITS.map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </select>
           <input
             id="ingredient"
             type="text"
-            value={ingredient}
-            onChange={(event) => setIngredient(event.target.value)}
+            value={ingredientName}
+            onChange={(event) => setIngredientName(event.target.value)}
             placeholder="Tomato"
             className="input input-bordered w-full"
           />
@@ -192,14 +227,14 @@ export default function RecipeForm({
           <div className="flex flex-wrap gap-2">
             {ingredients.map((item, index) => (
               <span
-                key={`${item}-${index}`}
+                key={`${item.name}-${item.unit}-${index}`}
                 className="badge badge-outline gap-2"
               >
-                {item}
+                {formatIngredientLine(item)}
                 <button
                   type="button"
                   onClick={() => removeIngredient(index)}
-                  aria-label={`Remove ${item}`}
+                  aria-label={`Remove ${item.name}`}
                   className="text-base-content/60 hover:text-error"
                 >
                   ×
@@ -211,10 +246,10 @@ export default function RecipeForm({
 
         {ingredients.map((item, index) => (
           <input
-            key={`hidden-${item}-${index}`}
+            key={`hidden-${item.name}-${item.unit}-${index}`}
             type="hidden"
             name="ingredients"
-            value={item}
+            value={JSON.stringify(item)}
           />
         ))}
 
@@ -269,9 +304,7 @@ export default function RecipeForm({
             </div>
           </div>
         ))}
-        {categoryError && (
-          <p className="text-sm text-error">{categoryError}</p>
-        )}
+        {categoryError && <p className="text-sm text-error">{categoryError}</p>}
       </div>
 
       <div className="flex flex-col gap-1">

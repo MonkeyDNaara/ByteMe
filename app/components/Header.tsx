@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "All Recipes", href: "/all-recipes" },
   { label: "Favorites", href: "/favorites" },
+  { label: "Shopping List", href: "/shopping-list" },
 ];
 
 const THEME_LIGHT = "bytemepastel";

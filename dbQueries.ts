@@ -3,15 +3,39 @@
 import z from "zod";
 import { sql } from "./db";
 import { auth } from "./lib/auth/server";
+import { INGREDIENT_UNITS } from "./lib/ingredientUnits";
+
+// Ingredients arrive from RecipeForm as one JSON-encoded string per repeated
+// "ingredients" form field (rather than parallel arrays), since that keeps
+// each ingredient's fields together without relying on array-index
+// alignment across separate form fields.
+function parseIngredientField(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+const ingredientInputSchema = z.object({
+  name: z.string().trim().min(1, "Ingredient name is required"),
+  amount: z.number().positive("Amount must be positive").nullable(),
+  // "" means no unit; only a fixed unit or "" is accepted even though the
+  // form's <select> already constrains this, as a defense-in-depth check.
+  unit: z.enum(["", ...INGREDIENT_UNITS]),
+});
 
 const recipeSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().trim().min(1, "Description is required"),
   snippet: z.string().trim().min(1, "Snippet is required"),
   time: z.coerce.number().positive("Time must be positive"),
-  ingredients: z
-    .array(z.string())
-    .min(1, "At least one ingredient is required"),
+  ingredients: z.preprocess(
+    (value) =>
+      Array.isArray(value) ? value.map(parseIngredientField) : value,
+    z.array(ingredientInputSchema).min(1, "At least one ingredient is required"),
+  ),
   categories: z.array(z.string()).min(1, "At least one category is required"),
   image_url: z.string().url("Invalid image URL"),
   difficulty: z.coerce
@@ -23,13 +47,40 @@ const recipeSchema = z.object({
 
 type RecipeInput = z.infer<typeof recipeSchema>;
 
-export type Recipe = RecipeInput & {
+export type Recipe = Omit<RecipeInput, "ingredients"> & {
   id: number;
   likes: number;
   created_at: Date;
   user_id: string | null;
   author_name: string | null;
+  // Raw JSON from the read queries' subquery; parsed properly by
+  // lib/recipe.ts's mapRowToRecipe, not consumed directly here.
+  ingredient_details: unknown;
 };
+
+/**
+ * Replaces every ingredient row for a recipe: delete-then-reinsert, rather
+ * than diffing old vs. new, since a recipe's ingredient list is always
+ * submitted as a whole (both create and edit send the full set).
+ */
+async function replaceIngredients(
+  recipeId: number,
+  ingredients: RecipeInput["ingredients"],
+) {
+  await sql`DELETE FROM recipe_ingredients WHERE recipe_id = ${recipeId}`;
+  if (ingredients.length === 0) return;
+
+  const names = ingredients.map((ingredient) => ingredient.name);
+  const amounts = ingredients.map((ingredient) => ingredient.amount);
+  const units = ingredients.map((ingredient) => ingredient.unit);
+
+  await sql`
+    INSERT INTO recipe_ingredients (recipe_id, name, amount, unit)
+    SELECT ${recipeId}, ingredient.name, ingredient.amount, ingredient.unit
+    FROM unnest(${names}::text[], ${amounts}::numeric[], ${units}::text[])
+      AS ingredient(name, amount, unit)
+  `;
+}
 
 export type RecipeState = {
   success: boolean;
@@ -39,16 +90,17 @@ export type RecipeState = {
 // Every read that returns a `Recipe` joins in the author's display name from
 // Neon Auth's own `user` table (left join, since `user_id` is nullable --
 // recipes created before this feature, or via the seed script, have none),
-// and computes `likes` as a live count of real rows in `favorites` rather
-// than reading the old `recipes.likes` column, which is no longer written to
-// and can't be trusted. The column list is spelled out (instead of
-// `recipes.*`) because a wildcard would collide with the `likes` alias below.
-// `GROUP BY recipes.id, author.name` is enough for Postgres to also allow
-// selecting the other `recipes.*` columns (functional dependency on the
-// primary key) and `author.name` (1:1 with recipes.id via the join). The
-// column list itself is repeated per query rather than factored out, since
-// this driver's `sql` tag runs a query immediately on use -- it isn't a
-// composable fragment that can be interpolated into another query.
+// and computes `likes` and `ingredient_details` as scalar subqueries rather
+// than joins. `favorites` and `recipe_ingredients` are both one-to-many
+// against `recipes`; joining both of them directly in the same query would
+// fan out into a cross product (a recipe with 3 ingredients and 2 favorites
+// would produce 6 rows), corrupting the like count and duplicating
+// ingredients. A scalar subquery per aggregate keeps each recipe to exactly
+// one row. The column list is spelled out (instead of `recipes.*`) because a
+// wildcard would collide with the `likes` alias, and is repeated per query
+// rather than factored out, since this driver's `sql` tag runs a query
+// immediately on use -- it isn't a composable fragment that can be
+// interpolated into another query.
 export const getRecipeById = async (id: number): Promise<Recipe[]> => {
   const result = await sql`
     SELECT
@@ -57,19 +109,21 @@ export const getRecipeById = async (id: number): Promise<Recipe[]> => {
       recipes.description,
       recipes.snippet,
       recipes.time,
-      recipes.ingredients,
       recipes.categories,
       recipes.image_url,
       recipes.difficulty,
       recipes.user_id,
       recipes.created_at,
       author.name AS author_name,
-      COUNT(favorites.user_id)::int AS likes
+      (SELECT COUNT(*)::int FROM favorites f WHERE f.recipe_id = recipes.id) AS likes,
+      (
+        SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
+        FROM recipe_ingredients ri
+        WHERE ri.recipe_id = recipes.id
+      ) AS ingredient_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
-    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
     WHERE recipes.id = ${id}
-    GROUP BY recipes.id, author.name
   `;
   return result as unknown as Recipe[];
 };
@@ -82,18 +136,20 @@ export const getRecipes = async (): Promise<Recipe[]> => {
       recipes.description,
       recipes.snippet,
       recipes.time,
-      recipes.ingredients,
       recipes.categories,
       recipes.image_url,
       recipes.difficulty,
       recipes.user_id,
       recipes.created_at,
       author.name AS author_name,
-      COUNT(favorites.user_id)::int AS likes
+      (SELECT COUNT(*)::int FROM favorites f WHERE f.recipe_id = recipes.id) AS likes,
+      (
+        SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
+        FROM recipe_ingredients ri
+        WHERE ri.recipe_id = recipes.id
+      ) AS ingredient_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
-    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
-    GROUP BY recipes.id, author.name
     ORDER BY recipes.created_at DESC
   `;
 
@@ -141,30 +197,190 @@ export const importFavorites = async (
   `;
 };
 
-export const createRecipeDEV = async (recipe: RecipeInput) => {
+// ---------------------------------------------------------------------------
+// Shopping list: which recipes a user has added (shopping_list_recipes,
+// shaped identically to favorites), plus the checked/unchecked state of an
+// aggregated ingredient line (shopping_list_checked_items). A checked line is
+// keyed by (name, unit) rather than by recipe_ingredients row, since the
+// aggregate itself is keyed that way -- the same ingredient can come from
+// more than one recipe on the list.
+// ---------------------------------------------------------------------------
+
+export const getShoppingListRecipeIds = async (
+  userId: string,
+): Promise<number[]> => {
+  const rows = await sql`
+    SELECT recipe_id FROM shopping_list_recipes WHERE user_id = ${userId}
+  `;
+  return (rows as { recipe_id: number }[]).map((row) => row.recipe_id);
+};
+
+export const addToShoppingList = async (userId: string, recipeId: number) => {
   await sql`
-    INSERT INTO recipes (
-      name,
-      description,
-      snippet,
-      time,
-      ingredients,
-      categories,
-      image_url,
-      likes,
-      difficulty
-    )
-    VALUES (
-      ${recipe.name},
-      ${recipe.description},
-      ${recipe.snippet},
-      ${recipe.time},
-      ${recipe.ingredients},
-      ${recipe.categories},
-      ${recipe.image_url},
-      ${Math.floor(Math.random() * 10 ** Math.floor((Math.random() + 1) * 3))},
-      ${recipe.difficulty}
-    )
+    INSERT INTO shopping_list_recipes (user_id, recipe_id)
+    VALUES (${userId}, ${recipeId})
+    ON CONFLICT (user_id, recipe_id) DO NOTHING
+  `;
+};
+
+export const removeFromShoppingList = async (
+  userId: string,
+  recipeId: number,
+) => {
+  await sql`
+    DELETE FROM shopping_list_recipes
+    WHERE user_id = ${userId} AND recipe_id = ${recipeId}
+  `;
+};
+
+export type ShoppingListIngredient = {
+  name: string;
+  unit: string;
+  amount: number | null;
+};
+
+/**
+ * Ingredients for every recipe on the user's shopping list, summed by
+ * (name, unit). If any contributing row has no amount, the whole line's
+ * amount comes back `null` (rather than silently summing only the known
+ * ones) since a partial total would understate what's actually needed.
+ */
+export const getShoppingListIngredients = async (
+  userId: string,
+): Promise<ShoppingListIngredient[]> => {
+  const rows = await sql`
+    SELECT
+      ri.name,
+      ri.unit,
+      CASE WHEN bool_or(ri.amount IS NULL) THEN NULL ELSE SUM(ri.amount) END AS amount
+    FROM recipe_ingredients ri
+    JOIN shopping_list_recipes slr ON slr.recipe_id = ri.recipe_id
+    WHERE slr.user_id = ${userId}
+    GROUP BY ri.name, ri.unit
+    ORDER BY ri.name
+  `;
+  // `SUM` on a numeric column comes back as a string (the driver avoids
+  // silently losing precision on large values), so it's parsed back to a
+  // number here rather than trusting the raw row shape.
+  return (
+    rows as { name: string; unit: string; amount: string | null }[]
+  ).map((row) => ({
+    name: row.name,
+    unit: row.unit,
+    amount: row.amount == null ? null : Number(row.amount),
+  }));
+};
+
+export type CheckedItemKey = { name: string; unit: string };
+
+export const getCheckedShoppingListItems = async (
+  userId: string,
+): Promise<CheckedItemKey[]> => {
+  const rows = await sql`
+    SELECT name, unit FROM shopping_list_checked_items WHERE user_id = ${userId}
+  `;
+  return rows as unknown as CheckedItemKey[];
+};
+
+export const setShoppingListItemChecked = async (
+  userId: string,
+  name: string,
+  unit: string,
+  checked: boolean,
+) => {
+  if (checked) {
+    await sql`
+      INSERT INTO shopping_list_checked_items (user_id, name, unit)
+      VALUES (${userId}, ${name}, ${unit})
+      ON CONFLICT (user_id, name, unit) DO NOTHING
+    `;
+  } else {
+    await sql`
+      DELETE FROM shopping_list_checked_items
+      WHERE user_id = ${userId} AND name = ${name} AND unit = ${unit}
+    `;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Shopping list: custom items, not tied to any recipe (e.g. "paper towels").
+// Unlike the recipe-derived aggregate, each custom item is its own uniquely
+// identified row from the moment it's created, so its checked state lives
+// directly on that row -- no separate checked-items table needed, since
+// there's no multi-recipe aggregation to key it by (name, unit) instead.
+// ---------------------------------------------------------------------------
+
+export type CustomShoppingListItem = {
+  id: number;
+  name: string;
+  amount: number | null;
+  unit: string;
+  checked: boolean;
+};
+
+function mapCustomItemRow(row: {
+  id: number;
+  name: string;
+  amount: string | number | null;
+  unit: string;
+  checked: boolean;
+}): CustomShoppingListItem {
+  return {
+    id: row.id,
+    name: row.name,
+    amount: row.amount == null ? null : Number(row.amount),
+    unit: row.unit,
+    checked: row.checked,
+  };
+}
+
+export const getCustomShoppingListItems = async (
+  userId: string,
+): Promise<CustomShoppingListItem[]> => {
+  const rows = await sql`
+    SELECT id, name, amount, unit, checked
+    FROM shopping_list_custom_items
+    WHERE user_id = ${userId}
+    ORDER BY created_at
+  `;
+  return (rows as Parameters<typeof mapCustomItemRow>[0][]).map(
+    mapCustomItemRow,
+  );
+};
+
+export const addCustomShoppingListItem = async (
+  userId: string,
+  name: string,
+  amount: number | null,
+  unit: string,
+): Promise<CustomShoppingListItem> => {
+  const [row] = await sql`
+    INSERT INTO shopping_list_custom_items (user_id, name, amount, unit)
+    VALUES (${userId}, ${name}, ${amount}, ${unit})
+    RETURNING id, name, amount, unit, checked
+  `;
+  return mapCustomItemRow(row as Parameters<typeof mapCustomItemRow>[0]);
+};
+
+export const removeCustomShoppingListItem = async (
+  userId: string,
+  itemId: number,
+) => {
+  await sql`
+    DELETE FROM shopping_list_custom_items
+    WHERE id = ${itemId} AND user_id = ${userId}
+  `;
+};
+
+export const setCustomShoppingListItemChecked = async (
+  userId: string,
+  itemId: number,
+  checked: boolean,
+) => {
+  await sql`
+    UPDATE shopping_list_custom_items
+    SET checked = ${checked}
+    WHERE id = ${itemId} AND user_id = ${userId}
   `;
 };
 
@@ -201,13 +417,14 @@ export const createRecipe = async (
   const recipe = result.data;
 
   try {
-    await sql`
+    // The old `ingredients` text[] column is no longer written to --
+    // structured ingredients go into recipe_ingredients below instead.
+    const [{ id: newRecipeId }] = await sql`
       INSERT INTO recipes (
         name,
         description,
         snippet,
         time,
-        ingredients,
         categories,
         image_url,
         likes,
@@ -219,14 +436,16 @@ export const createRecipe = async (
         ${recipe.description},
         ${recipe.snippet},
         ${recipe.time},
-        ${recipe.ingredients},
         ${recipe.categories},
         ${recipe.image_url},
         0,
         ${recipe.difficulty},
         ${session.user.id}
       )
+      RETURNING id
     `;
+
+    await replaceIngredients(newRecipeId as number, recipe.ingredients);
 
     return { success: true };
   } catch (error) {
@@ -286,7 +505,6 @@ export const updateRecipe = async (
         description = ${recipe.description},
         snippet = ${recipe.snippet},
         time = ${recipe.time},
-        ingredients = ${recipe.ingredients},
         categories = ${recipe.categories},
         image_url = ${recipe.image_url},
         difficulty = ${recipe.difficulty}
@@ -300,6 +518,8 @@ export const updateRecipe = async (
         message: "You can only edit recipes you created",
       };
     }
+
+    await replaceIngredients(id, recipe.ingredients);
 
     return { success: true };
   } catch (error) {
@@ -357,19 +577,21 @@ export const searchRecipes = async (search: string): Promise<Recipe[]> => {
       recipes.description,
       recipes.snippet,
       recipes.time,
-      recipes.ingredients,
       recipes.categories,
       recipes.image_url,
       recipes.difficulty,
       recipes.user_id,
       recipes.created_at,
       author.name AS author_name,
-      COUNT(favorites.user_id)::int AS likes
+      (SELECT COUNT(*)::int FROM favorites f WHERE f.recipe_id = recipes.id) AS likes,
+      (
+        SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
+        FROM recipe_ingredients ri
+        WHERE ri.recipe_id = recipes.id
+      ) AS ingredient_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
-    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
     WHERE recipes.name ILIKE ${`%${search}%`}
-    GROUP BY recipes.id, author.name
     ORDER BY recipes.created_at DESC
   `;
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
+import ShoppingListButton from "@/app/components/ShoppingListButton";
 import { authClient } from "@/lib/auth/client";
 import {
   DIFFICULTY_EMOJI,
@@ -149,10 +150,13 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
         className="group card relative cursor-pointer overflow-hidden border border-primary/20 bg-base-200 shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
         onClick={openModal}
       >
-        <div onClick={(event) => event.stopPropagation()}>
+        <div
+          onClick={(event) => event.stopPropagation()}
+          className="absolute right-3 top-3 z-10 flex gap-2"
+        >
+          <ShoppingListButton recipeId={String(recipe.id)} />
           <FavoriteButton
             recipeId={String(recipe.id)}
-            className="absolute right-3 top-3 z-10"
             onToggle={handleFavoriteToggle}
           />
         </div>
@@ -194,11 +198,14 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
                 <div className="flex items-start justify-between gap-4">
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{recipe.name}</h1>
 
-                  <FavoriteButton
-                    recipeId={String(recipe.id)}
-                    size="md"
-                    onToggle={handleFavoriteToggle}
-                  />
+                  <div className="flex items-center gap-2">
+                    <ShoppingListButton recipeId={String(recipe.id)} size="md" />
+                    <FavoriteButton
+                      recipeId={String(recipe.id)}
+                      size="md"
+                      onToggle={handleFavoriteToggle}
+                    />
+                  </div>
                 </div>
 
                 <p className="text-base-content/80">{recipe.snippet}</p>
