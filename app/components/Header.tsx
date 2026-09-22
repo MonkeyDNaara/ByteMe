@@ -5,6 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
+import { signOut } from "@/app/auth/actions";
+
+type HeaderProps = {
+  user: { name: string } | null;
+};
+
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "All Recipes", href: "/all-recipes" },
@@ -20,7 +26,7 @@ function applyTheme(dark: boolean) {
   root.setAttribute("data-theme", dark ? THEME_DARK : THEME_LIGHT);
 }
 
-export default function Header() {
+export default function Header({ user }: HeaderProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
@@ -131,6 +137,23 @@ export default function Header() {
             )}
           </button>
 
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="max-w-32 truncate text-sm text-base-content/70">
+                {user.name}
+              </span>
+              <form action={signOut}>
+                <button type="submit" className="btn btn-ghost btn-sm">
+                  Log out
+                </button>
+              </form>
+            </div>
+          ) : (
+            <Link href="/auth/sign-in" className="btn btn-ghost btn-sm">
+              Sign in
+            </Link>
+          )}
+
           <Link href="/create-recipe" className="btn btn-primary btn-sm">
             + Create Recipe
           </Link>
@@ -235,6 +258,26 @@ export default function Header() {
                 </Link>
               );
             })}
+            {user ? (
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="truncate text-sm text-base-content/70">
+                  {user.name}
+                </span>
+                <form action={signOut}>
+                  <button type="submit" className="btn btn-ghost btn-sm">
+                    Log out
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <Link
+                href="/auth/sign-in"
+                onClick={() => setIsMobileOpen(false)}
+                className="btn btn-ghost btn-sm w-full"
+              >
+                Sign in
+              </Link>
+            )}
             <Link
               href="/create-recipe"
               onClick={() => setIsMobileOpen(false)}

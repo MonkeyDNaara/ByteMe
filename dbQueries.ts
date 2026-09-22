@@ -2,6 +2,7 @@
 
 import z from "zod";
 import { sql } from "./db";
+import { auth } from "./lib/auth/server";
 
 const recipeSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -92,6 +93,14 @@ export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,
 ) => {
+  const { data: session } = await auth.getSession();
+  if (!session?.user) {
+    return {
+      success: false,
+      message: "You must be signed in to create a recipe",
+    };
+  }
+
   const result = recipeSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
