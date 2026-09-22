@@ -38,34 +38,106 @@ export type RecipeState = {
 
 // Every read that returns a `Recipe` joins in the author's display name from
 // Neon Auth's own `user` table (left join, since `user_id` is nullable --
-// recipes created before this feature, or via the seed script, have none).
+// recipes created before this feature, or via the seed script, have none),
+// and computes `likes` as a live count of real rows in `favorites` rather
+// than reading the old `recipes.likes` column, which is no longer written to
+// and can't be trusted. The column list is spelled out (instead of
+// `recipes.*`) because a wildcard would collide with the `likes` alias below.
+// `GROUP BY recipes.id, author.name` is enough for Postgres to also allow
+// selecting the other `recipes.*` columns (functional dependency on the
+// primary key) and `author.name` (1:1 with recipes.id via the join). The
+// column list itself is repeated per query rather than factored out, since
+// this driver's `sql` tag runs a query immediately on use -- it isn't a
+// composable fragment that can be interpolated into another query.
 export const getRecipeById = async (id: number): Promise<Recipe[]> => {
   const result = await sql`
-    SELECT recipes.*, author.name AS author_name
+    SELECT
+      recipes.id,
+      recipes.name,
+      recipes.description,
+      recipes.snippet,
+      recipes.time,
+      recipes.ingredients,
+      recipes.categories,
+      recipes.image_url,
+      recipes.difficulty,
+      recipes.user_id,
+      recipes.created_at,
+      author.name AS author_name,
+      COUNT(favorites.user_id)::int AS likes
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
     WHERE recipes.id = ${id}
+    GROUP BY recipes.id, author.name
   `;
   return result as unknown as Recipe[];
 };
 
 export const getRecipes = async (): Promise<Recipe[]> => {
   const result = await sql`
-    SELECT recipes.*, author.name AS author_name
+    SELECT
+      recipes.id,
+      recipes.name,
+      recipes.description,
+      recipes.snippet,
+      recipes.time,
+      recipes.ingredients,
+      recipes.categories,
+      recipes.image_url,
+      recipes.difficulty,
+      recipes.user_id,
+      recipes.created_at,
+      author.name AS author_name,
+      COUNT(favorites.user_id)::int AS likes
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
+    GROUP BY recipes.id, author.name
     ORDER BY recipes.created_at DESC
   `;
 
   return result as unknown as Recipe[];
 };
 
-// delta is +1 (favourited) or -1 (un-favourited)
-export const updateRecipeLikes = async (id: number, delta: 1 | -1) => {
-  return sql`
-    UPDATE recipes
-    SET likes = GREATEST(likes + ${delta}, 0)
-    WHERE id = ${id}
+export const getFavoriteRecipeIds = async (
+  userId: string,
+): Promise<number[]> => {
+  const rows = await sql`
+    SELECT recipe_id FROM favorites WHERE user_id = ${userId}
+  `;
+  return (rows as { recipe_id: number }[]).map((row) => row.recipe_id);
+};
+
+export const addFavorite = async (userId: string, recipeId: number) => {
+  await sql`
+    INSERT INTO favorites (user_id, recipe_id)
+    VALUES (${userId}, ${recipeId})
+    ON CONFLICT (user_id, recipe_id) DO NOTHING
+  `;
+};
+
+export const removeFavorite = async (userId: string, recipeId: number) => {
+  await sql`
+    DELETE FROM favorites
+    WHERE user_id = ${userId} AND recipe_id = ${recipeId}
+  `;
+};
+
+// Used once per account, the first time `lib/useFavorites.ts` finds
+// pre-accounts favorites left in that browser's localStorage. The subquery
+// (rather than inserting `recipeIds` directly) means a stale id for a
+// recipe that no longer exists is just silently skipped instead of throwing
+// a foreign-key error.
+export const importFavorites = async (
+  userId: string,
+  recipeIds: number[],
+) => {
+  if (recipeIds.length === 0) return;
+  await sql`
+    INSERT INTO favorites (user_id, recipe_id)
+    SELECT ${userId}, recipes.id FROM recipes WHERE recipes.id = ANY(${recipeIds})
+    ON CONFLICT (user_id, recipe_id) DO NOTHING
   `;
 };
 
@@ -279,10 +351,25 @@ export const deleteRecipe = async (
 
 export const searchRecipes = async (search: string): Promise<Recipe[]> => {
   const result = sql`
-    SELECT recipes.*, author.name AS author_name
+    SELECT
+      recipes.id,
+      recipes.name,
+      recipes.description,
+      recipes.snippet,
+      recipes.time,
+      recipes.ingredients,
+      recipes.categories,
+      recipes.image_url,
+      recipes.difficulty,
+      recipes.user_id,
+      recipes.created_at,
+      author.name AS author_name,
+      COUNT(favorites.user_id)::int AS likes
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
+    LEFT JOIN favorites ON favorites.recipe_id = recipes.id
     WHERE recipes.name ILIKE ${`%${search}%`}
+    GROUP BY recipes.id, author.name
     ORDER BY recipes.created_at DESC
   `;
 

@@ -41,7 +41,8 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
   // Optimistic local count so the card/modal update immediately when the
   // favourite button is pressed, instead of only reflecting the DB's real
   // value on the next full render. The actual write is still best-effort
-  // (see FavoriteButton/setRecipeLiked) -- this just mirrors it visually.
+  // (see FavoriteButton/lib/useFavorites.ts's setFavorite) -- this just
+  // mirrors it visually; the real count is derived from the favorites table.
   const [likes, setLikes] = useState(recipe.likes);
 
   const handleFavoriteToggle = (isFavorite: boolean) => {

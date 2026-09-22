@@ -1,8 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 
-import { setRecipeLiked } from "@/lib/likes";
 import { useFavorites } from "@/lib/useFavorites";
 
 type FavoriteButtonProps = {
@@ -20,18 +20,23 @@ export default function FavoriteButton({
   className = "",
   onToggle,
 }: FavoriteButtonProps) {
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const router = useRouter();
+  const { isFavorite, toggleFavorite, isLoggedIn } = useFavorites();
   const active = isFavorite(recipeId);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The button can sit inside a card that is itself a link.
     event.preventDefault();
     event.stopPropagation();
+
+    if (!isLoggedIn) {
+      router.push("/auth/sign-in");
+      return;
+    }
+
     const nextActive = !active;
     toggleFavorite(recipeId);
     onToggle?.(nextActive);
-    // Best-effort DB sync; the favourite toggle above doesn't wait on this.
-    void setRecipeLiked(recipeId, nextActive);
   };
 
   return (

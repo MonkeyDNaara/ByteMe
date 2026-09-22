@@ -1,40 +1,32 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-// Favourites are stored as an array of recipe ids in localStorage.
-const STORAGE_KEY = "byte-me:favorites";
-// Same-tab sync: components dispatch/listen for this event so every mounted
-// `useFavorites` updates when one of them changes the list. Cross-tab sync uses
-// the native `storage` event.
+import { authClient } from "@/lib/auth/client";
+import {
+  getMyFavoriteIds,
+  importLocalFavorites,
+  setFavorite,
+} from "@/lib/favorites";
+
+// Same-tab sync: every mounted `useFavorites` re-renders when one of them
+// changes the shared cache below. There's no cross-tab sync anymore (unlike
+// the old localStorage-backed version, which got that for free from the
+// native `storage` event) -- favorites now live server-side, so another tab
+// only sees a change on its next fetch.
 const CHANGE_EVENT = "byte-me:favorites-changed";
 
-// `useSyncExternalStore` requires `getSnapshot` to return a stable reference
-// while the underlying data is unchanged, so we memoise the parsed array against
-// the raw string last seen in storage.
-let cachedRaw: string | null = null;
+// The pre-accounts localStorage key this hook imports from, once, then clears.
+const LEGACY_STORAGE_KEY = "byte-me:favorites";
+
 let cachedFavorites: string[] = [];
+// Which account `cachedFavorites` belongs to, so switching accounts (or
+// logging out) doesn't leak the previous user's favorites for a moment.
+let cachedForUserId: string | null = null;
+let loadInFlight: Promise<void> | null = null;
 const SERVER_SNAPSHOT: string[] = [];
 
 function getSnapshot(): string[] {
-  let raw: string | null = null;
-  try {
-    raw = window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return cachedFavorites;
-  }
-
-  if (raw === cachedRaw) return cachedFavorites;
-  cachedRaw = raw;
-
-  try {
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    cachedFavorites = Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    cachedFavorites = [];
-  }
   return cachedFavorites;
 }
 
@@ -43,47 +35,95 @@ function getServerSnapshot(): string[] {
 }
 
 function subscribe(onChange: () => void): () => void {
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY) onChange();
-  };
   window.addEventListener(CHANGE_EVENT, onChange);
-  window.addEventListener("storage", onStorage);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, onChange);
-    window.removeEventListener("storage", onStorage);
-  };
+  return () => window.removeEventListener(CHANGE_EVENT, onChange);
+}
+
+function notify() {
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+function readLegacyFavoriteIds(): string[] {
+  try {
+    const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function loadFavorites(userId: string): Promise<void> {
+  if (loadInFlight) return loadInFlight;
+
+  loadInFlight = (async () => {
+    const legacyIds = readLegacyFavoriteIds();
+    if (legacyIds.length > 0) {
+      await importLocalFavorites(legacyIds);
+      try {
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      } catch {
+        // Ignore: worst case, the next load retries the (now no-op) import.
+      }
+    }
+
+    cachedFavorites = await getMyFavoriteIds();
+    cachedForUserId = userId;
+    notify();
+  })();
+
+  try {
+    await loadInFlight;
+  } finally {
+    loadInFlight = null;
+  }
 }
 
 export function useFavorites() {
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id ?? null;
   const favorites = useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot,
   );
 
-  const toggleFavorite = useCallback((id: string) => {
-    const current = getSnapshot();
-    const next = current.includes(id)
-      ? current.filter((item) => item !== id)
-      : [...current, id];
-    const serialized = JSON.stringify(next);
-    // Update the memoised snapshot up front so this works even if storage is
-    // unavailable (private mode, disabled).
-    cachedRaw = serialized;
-    cachedFavorites = next;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, serialized);
-    } catch {
-      // Ignore: the in-memory cache above keeps this session consistent.
+  useEffect(() => {
+    if (!userId) {
+      if (cachedForUserId !== null) {
+        cachedFavorites = [];
+        cachedForUserId = null;
+        notify();
+      }
+      return;
     }
-    // Refresh every mounted `useFavorites` in this tab.
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-  }, []);
+
+    if (cachedForUserId !== userId) {
+      void loadFavorites(userId);
+    }
+  }, [userId]);
+
+  const toggleFavorite = useCallback(
+    (id: string) => {
+      if (!userId) return;
+
+      const next = !cachedFavorites.includes(id);
+      cachedFavorites = next
+        ? [...cachedFavorites, id]
+        : cachedFavorites.filter((item) => item !== id);
+      notify();
+      // Best-effort DB sync; the optimistic update above doesn't wait on this.
+      void setFavorite(id, next);
+    },
+    [userId],
+  );
 
   const isFavorite = useCallback(
     (id: string) => favorites.includes(id),
     [favorites],
   );
 
-  return { favorites, isFavorite, toggleFavorite };
+  return { favorites, isFavorite, toggleFavorite, isLoggedIn: userId != null };
 }
