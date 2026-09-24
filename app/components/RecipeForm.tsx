@@ -4,6 +4,7 @@ import {
   type SyntheticEvent,
   useActionState,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -73,6 +74,12 @@ export default function RecipeForm({
   const [steps, setSteps] = useState<StepFormValue[]>(
     defaultValues?.steps ?? [],
   );
+  // null = the input row is for adding a new step; a number = it's
+  // currently editing that existing step in place instead.
+  const [editingStepIndex, setEditingStepIndex] = useState<number | null>(
+    null,
+  );
+  const stepFormRef = useRef<HTMLDivElement>(null);
 
   const [state, formAction, isPending] = useActionState(action, null);
 
@@ -102,7 +109,13 @@ export default function RecipeForm({
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const addStep = () => {
+  const resetStepInputs = () => {
+    setStepDescription("");
+    setStepIngredients("");
+    setStepTimeMinutes("");
+  };
+
+  const saveStep = () => {
     const description = stepDescription.trim();
     if (!description) return;
 
@@ -111,17 +124,48 @@ export default function RecipeForm({
     const timeMinutes =
       parsedTime != null && Number.isFinite(parsedTime) ? parsedTime : null;
 
-    setSteps([
-      ...steps,
-      { description, ingredients: stepIngredients.trim(), timeMinutes },
-    ]);
-    setStepDescription("");
-    setStepIngredients("");
-    setStepTimeMinutes("");
+    const value: StepFormValue = {
+      description,
+      ingredients: stepIngredients.trim(),
+      timeMinutes,
+    };
+
+    if (editingStepIndex != null) {
+      setSteps(
+        steps.map((step, index) =>
+          index === editingStepIndex ? value : step,
+        ),
+      );
+      setEditingStepIndex(null);
+    } else {
+      setSteps([...steps, value]);
+    }
+
+    resetStepInputs();
+  };
+
+  const startEditStep = (index: number) => {
+    const step = steps[index];
+    setStepDescription(step.description);
+    setStepIngredients(step.ingredients);
+    setStepTimeMinutes(step.timeMinutes != null ? String(step.timeMinutes) : "");
+    setEditingStepIndex(index);
+    stepFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const cancelEditStep = () => {
+    setEditingStepIndex(null);
+    resetStepInputs();
   };
 
   const removeStep = (index: number) => {
     setSteps(steps.filter((_, i) => i !== index));
+
+    if (editingStepIndex === index) {
+      cancelEditStep();
+    } else if (editingStepIndex != null && index < editingStepIndex) {
+      setEditingStepIndex(editingStepIndex - 1);
+    }
   };
 
   const moveStep = (index: number, direction: -1 | 1) => {
@@ -131,6 +175,9 @@ export default function RecipeForm({
     const next = [...steps];
     [next[index], next[target]] = [next[target], next[index]];
     setSteps(next);
+
+    if (editingStepIndex === index) setEditingStepIndex(target);
+    else if (editingStepIndex === target) setEditingStepIndex(index);
   };
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
@@ -316,7 +363,10 @@ export default function RecipeForm({
           need one.
         </p>
 
-        <div className="flex flex-col gap-2 rounded-box border border-base-300 p-3">
+        <div
+          ref={stepFormRef}
+          className="flex flex-col gap-2 rounded-box border border-base-300 p-3"
+        >
           <textarea
             id="step-description"
             value={stepDescription}
@@ -347,11 +397,20 @@ export default function RecipeForm({
             />
             <button
               type="button"
-              onClick={addStep}
+              onClick={saveStep}
               className="btn btn-primary btn-sm shrink-0"
             >
-              Add step
+              {editingStepIndex != null ? "Save step" : "Add step"}
             </button>
+            {editingStepIndex != null && (
+              <button
+                type="button"
+                onClick={cancelEditStep}
+                className="btn btn-ghost btn-sm shrink-0"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
 
@@ -360,7 +419,9 @@ export default function RecipeForm({
             {steps.map((step, index) => (
               <li
                 key={`${step.description}-${index}`}
-                className="flex items-start justify-between gap-3 rounded-box bg-base-100 p-3 text-sm"
+                className={`flex items-start justify-between gap-3 rounded-box bg-base-100 p-3 text-sm ${
+                  index === editingStepIndex ? "ring-2 ring-primary" : ""
+                }`}
               >
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold">Step {index + 1}</p>
@@ -380,6 +441,14 @@ export default function RecipeForm({
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => startEditStep(index)}
+                    aria-label={`Edit step ${index + 1}`}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    Edit
+                  </button>
                   <button
                     type="button"
                     onClick={() => moveStep(index, -1)}
