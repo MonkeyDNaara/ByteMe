@@ -7,9 +7,10 @@ import { signIn, signUp } from "@/app/auth/actions";
 
 type AuthFormProps = {
   mode: "sign-in" | "sign-up";
+  notice?: string;
 };
 
-export default function AuthForm({ mode }: AuthFormProps) {
+export default function AuthForm({ mode, notice }: AuthFormProps) {
   const isSignUp = mode === "sign-up";
   const [state, formAction, isPending] = useActionState(
     isSignUp ? signUp : signIn,
@@ -28,6 +29,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
             : "Sign in to create your own recipes."}
         </p>
       </header>
+
+      {notice && (
+        <p role="status" className="text-sm text-success">
+          {notice}
+        </p>
+      )}
 
       <form
         action={formAction}
@@ -78,10 +85,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
             required
             className="input input-bordered w-full"
           />
-          {isSignUp && (
+          {isSignUp ? (
             <p className="text-xs text-base-content/60">
               At least 8 characters.
             </p>
+          ) : (
+            <Link
+              href="/auth/forgot-password"
+              className="link link-primary self-end text-xs"
+            >
+              Forgot password?
+            </Link>
           )}
         </div>
 
