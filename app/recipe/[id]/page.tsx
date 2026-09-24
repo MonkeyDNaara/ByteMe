@@ -132,6 +132,14 @@ export default async function RecipeDetailPage({
         </p>
       </section>
 
+      {recipe.steps.length > 0 && (
+        <div className="flex justify-center">
+          <Link href={`/recipe/${recipe.id}/cook`} className="btn btn-primary">
+            Start cooking
+          </Link>
+        </div>
+      )}
+
       <div className="flex justify-center">
         <a
           href="https://leetcode.com/problemset/"

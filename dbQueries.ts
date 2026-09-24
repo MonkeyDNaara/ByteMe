@@ -5,11 +5,11 @@ import { sql } from "./db";
 import { auth } from "./lib/auth/server";
 import { INGREDIENT_UNITS } from "./lib/ingredientUnits";
 
-// Ingredients arrive from RecipeForm as one JSON-encoded string per repeated
-// "ingredients" form field (rather than parallel arrays), since that keeps
-// each ingredient's fields together without relying on array-index
+// Both ingredients and steps arrive from RecipeForm as one JSON-encoded
+// string per repeated form field (rather than parallel arrays), since that
+// keeps each item's fields together without relying on array-index
 // alignment across separate form fields.
-function parseIngredientField(value: unknown): unknown {
+function parseJsonField(value: unknown): unknown {
   if (typeof value !== "string") return value;
   try {
     return JSON.parse(value);
@@ -26,6 +26,16 @@ const ingredientInputSchema = z.object({
   unit: z.enum(["", ...INGREDIENT_UNITS]),
 });
 
+// A step's `number` is never submitted -- it's assigned from the array's
+// order at save time (see replaceSteps below), the same way an ingredient's
+// position is just its position in the array, not a separate field.
+const stepInputSchema = z.object({
+  title: z.string().trim(),
+  description: z.string().trim().min(1, "Step description is required"),
+  ingredients: z.string().trim(),
+  timeMinutes: z.number().positive("Time must be positive").nullable(),
+});
+
 const recipeSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().trim().min(1, "Description is required"),
@@ -33,8 +43,15 @@ const recipeSchema = z.object({
   time: z.coerce.number().positive("Time must be positive"),
   ingredients: z.preprocess(
     (value) =>
-      Array.isArray(value) ? value.map(parseIngredientField) : value,
+      Array.isArray(value) ? value.map(parseJsonField) : value,
     z.array(ingredientInputSchema).min(1, "At least one ingredient is required"),
+  ),
+  // Cooking steps are entirely optional -- a recipe with zero steps is
+  // valid, unlike ingredients which need at least one.
+  steps: z.preprocess(
+    (value) =>
+      Array.isArray(value) ? value.map(parseJsonField) : value,
+    z.array(stepInputSchema),
   ),
   categories: z.array(z.string()).min(1, "At least one category is required"),
   image_url: z.string().url("Invalid image URL"),
@@ -47,15 +64,16 @@ const recipeSchema = z.object({
 
 type RecipeInput = z.infer<typeof recipeSchema>;
 
-export type Recipe = Omit<RecipeInput, "ingredients"> & {
+export type Recipe = Omit<RecipeInput, "ingredients" | "steps"> & {
   id: number;
   likes: number;
   created_at: Date;
   user_id: string | null;
   author_name: string | null;
-  // Raw JSON from the read queries' subquery; parsed properly by
+  // Raw JSON from the read queries' subqueries; parsed properly by
   // lib/recipe.ts's mapRowToRecipe, not consumed directly here.
   ingredient_details: unknown;
+  step_details: unknown;
 };
 
 /**
@@ -79,6 +97,30 @@ async function replaceIngredients(
     SELECT ${recipeId}, ingredient.name, ingredient.amount, ingredient.unit
     FROM unnest(${names}::text[], ${amounts}::numeric[], ${units}::text[])
       AS ingredient(name, amount, unit)
+  `;
+}
+
+/**
+ * Replaces every cooking step for a recipe, the same delete-then-reinsert
+ * approach as replaceIngredients. `step_number` is assigned here from each
+ * step's position in the array (1-based), since the form never submits a
+ * number -- reordering steps in the UI is just reordering this array.
+ */
+async function replaceSteps(recipeId: number, steps: RecipeInput["steps"]) {
+  await sql`DELETE FROM recipe_steps WHERE recipe_id = ${recipeId}`;
+  if (steps.length === 0) return;
+
+  const stepNumbers = steps.map((_, index) => index + 1);
+  const titles = steps.map((step) => step.title);
+  const descriptions = steps.map((step) => step.description);
+  const ingredientsNotes = steps.map((step) => step.ingredients);
+  const timeMinutes = steps.map((step) => step.timeMinutes);
+
+  await sql`
+    INSERT INTO recipe_steps (recipe_id, step_number, title, description, ingredients, time_minutes)
+    SELECT ${recipeId}, step.step_number, step.title, step.description, step.ingredients, step.time_minutes
+    FROM unnest(${stepNumbers}::int[], ${titles}::text[], ${descriptions}::text[], ${ingredientsNotes}::text[], ${timeMinutes}::int[])
+      AS step(step_number, title, description, ingredients, time_minutes)
   `;
 }
 
@@ -120,7 +162,12 @@ export const getRecipeById = async (id: number): Promise<Recipe[]> => {
         SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
         FROM recipe_ingredients ri
         WHERE ri.recipe_id = recipes.id
-      ) AS ingredient_details
+      ) AS ingredient_details,
+      (
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        FROM recipe_steps rs
+        WHERE rs.recipe_id = recipes.id
+      ) AS step_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
     WHERE recipes.id = ${id}
@@ -147,7 +194,12 @@ export const getRecipes = async (): Promise<Recipe[]> => {
         SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
         FROM recipe_ingredients ri
         WHERE ri.recipe_id = recipes.id
-      ) AS ingredient_details
+      ) AS ingredient_details,
+      (
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        FROM recipe_steps rs
+        WHERE rs.recipe_id = recipes.id
+      ) AS step_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
     ORDER BY recipes.created_at DESC
@@ -402,6 +454,7 @@ export const createRecipe = async (
     snippet: formData.get("snippet"),
     time: formData.get("time"),
     ingredients: formData.getAll("ingredients"),
+    steps: formData.getAll("steps"),
     categories: formData.getAll("categories"),
     image_url: formData.get("image_url"),
     difficulty: formData.get("difficulty"),
@@ -446,6 +499,7 @@ export const createRecipe = async (
     `;
 
     await replaceIngredients(newRecipeId as number, recipe.ingredients);
+    await replaceSteps(newRecipeId as number, recipe.steps);
 
     return { success: true };
   } catch (error) {
@@ -480,6 +534,7 @@ export const updateRecipe = async (
     snippet: formData.get("snippet"),
     time: formData.get("time"),
     ingredients: formData.getAll("ingredients"),
+    steps: formData.getAll("steps"),
     categories: formData.getAll("categories"),
     image_url: formData.get("image_url"),
     difficulty: formData.get("difficulty"),
@@ -520,6 +575,7 @@ export const updateRecipe = async (
     }
 
     await replaceIngredients(id, recipe.ingredients);
+    await replaceSteps(id, recipe.steps);
 
     return { success: true };
   } catch (error) {
@@ -588,7 +644,12 @@ export const searchRecipes = async (search: string): Promise<Recipe[]> => {
         SELECT COALESCE(json_agg(json_build_object('name', ri.name, 'amount', ri.amount, 'unit', ri.unit) ORDER BY ri.id), '[]'::json)
         FROM recipe_ingredients ri
         WHERE ri.recipe_id = recipes.id
-      ) AS ingredient_details
+      ) AS ingredient_details,
+      (
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        FROM recipe_steps rs
+        WHERE rs.recipe_id = recipes.id
+      ) AS step_details
     FROM recipes
     LEFT JOIN neon_auth."user" AS author ON author.id = recipes.user_id
     WHERE recipes.name ILIKE ${`%${search}%`}
