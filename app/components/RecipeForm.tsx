@@ -20,12 +20,22 @@ import {
   REQUIRED_CATEGORY_GROUP,
 } from "@/lib/recipe";
 
+// `number` is left out -- it's never edited directly, just the step's
+// position in the array (see dbQueries.ts's replaceSteps), so the editing
+// state only needs to track the fields a step actually carries.
+type StepFormValue = {
+  description: string;
+  ingredients: string;
+  timeMinutes: number | null;
+};
+
 export type RecipeFormValues = {
   name: string;
   description: string;
   snippet: string;
   time: number;
   ingredients: IngredientDetail[];
+  steps: StepFormValue[];
   categories: string[];
   image_url: string;
   difficulty: number | null;
@@ -57,6 +67,13 @@ export default function RecipeForm({
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
+  const [stepDescription, setStepDescription] = useState("");
+  const [stepIngredients, setStepIngredients] = useState("");
+  const [stepTimeMinutes, setStepTimeMinutes] = useState("");
+  const [steps, setSteps] = useState<StepFormValue[]>(
+    defaultValues?.steps ?? [],
+  );
+
   const [state, formAction, isPending] = useActionState(action, null);
 
   useEffect(() => {
@@ -83,6 +100,37 @@ export default function RecipeForm({
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const addStep = () => {
+    const description = stepDescription.trim();
+    if (!description) return;
+
+    const parsedTime =
+      stepTimeMinutes.trim() === "" ? null : Number(stepTimeMinutes);
+    const timeMinutes =
+      parsedTime != null && Number.isFinite(parsedTime) ? parsedTime : null;
+
+    setSteps([
+      ...steps,
+      { description, ingredients: stepIngredients.trim(), timeMinutes },
+    ]);
+    setStepDescription("");
+    setStepIngredients("");
+    setStepTimeMinutes("");
+  };
+
+  const removeStep = (index: number) => {
+    setSteps(steps.filter((_, i) => i !== index));
+  };
+
+  const moveStep = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= steps.length) return;
+
+    const next = [...steps];
+    [next[index], next[target]] = [next[target], next[index]];
+    setSteps(next);
   };
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
@@ -256,6 +304,126 @@ export default function RecipeForm({
         {ingredientsError && (
           <p className="text-sm text-error">{ingredientsError}</p>
         )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="step-description" className="text-sm font-semibold">
+          Cooking steps
+        </label>
+        <p className="text-xs text-base-content/60">
+          Optional. Add steps to enable a &ldquo;Start cooking&rdquo; guided
+          view on the recipe page. Leave empty if this recipe doesn&apos;t
+          need one.
+        </p>
+
+        <div className="flex flex-col gap-2 rounded-box border border-base-300 p-3">
+          <textarea
+            id="step-description"
+            value={stepDescription}
+            onChange={(event) => setStepDescription(event.target.value)}
+            placeholder="Describe this step"
+            rows={2}
+            aria-label="Step description"
+            className="textarea textarea-bordered w-full"
+          />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={stepIngredients}
+              onChange={(event) => setStepIngredients(event.target.value)}
+              placeholder="Ingredients used (optional)"
+              aria-label="Step ingredients"
+              className="input input-bordered w-full"
+            />
+            <input
+              type="number"
+              step="any"
+              min="0"
+              value={stepTimeMinutes}
+              onChange={(event) => setStepTimeMinutes(event.target.value)}
+              placeholder="Minutes"
+              aria-label="Step time in minutes"
+              className="input input-bordered w-full sm:w-28"
+            />
+            <button
+              type="button"
+              onClick={addStep}
+              className="btn btn-primary btn-sm shrink-0"
+            >
+              Add step
+            </button>
+          </div>
+        </div>
+
+        {steps.length > 0 && (
+          <ol className="flex flex-col gap-2">
+            {steps.map((step, index) => (
+              <li
+                key={`${step.description}-${index}`}
+                className="flex items-start justify-between gap-3 rounded-box bg-base-100 p-3 text-sm"
+              >
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold">Step {index + 1}</p>
+                  <p className="text-base-content/80">{step.description}</p>
+                  {(step.ingredients || step.timeMinutes != null) && (
+                    <p className="text-xs text-base-content/60">
+                      {[
+                        step.ingredients || null,
+                        step.timeMinutes != null
+                          ? `⏱ ${step.timeMinutes} min`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveStep(index, -1)}
+                    disabled={index === 0}
+                    aria-label={`Move step ${index + 1} up`}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveStep(index, 1)}
+                    disabled={index === steps.length - 1}
+                    aria-label={`Move step ${index + 1} down`}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeStep(index)}
+                    aria-label={`Remove step ${index + 1}`}
+                    className="btn btn-ghost btn-xs text-error"
+                  >
+                    ×
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {steps.map((step, index) => (
+          <input
+            key={`hidden-step-${index}`}
+            type="hidden"
+            name="steps"
+            value={JSON.stringify({
+              description: step.description,
+              ingredients: step.ingredients,
+              timeMinutes: step.timeMinutes,
+            })}
+          />
+        ))}
       </div>
 
       <div className="flex flex-col gap-1">

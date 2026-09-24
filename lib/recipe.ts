@@ -28,6 +28,27 @@ export function formatIngredientLine(detail: IngredientDetail): string {
   return parts.join(" ");
 }
 
+// `number` isn't stored on the row -- a step's position in the DB's
+// `step_details` JSON array (already ORDER BY step_number) is its number,
+// the same way an ingredient's position in its own array is never a
+// separate stored field either.
+export const CookingStep = z.object({
+  number: z.number().int(),
+  description: z.string(),
+  ingredients: z.string(),
+  timeMinutes: z.number().nullable(),
+});
+
+export type CookingStep = z.infer<typeof CookingStep>;
+
+// Matches the raw shape of one entry in the step_details JSON subquery
+// (snake_case, no `number`) before `mapRowToRecipe` adds the array index.
+const RawCookingStepDetail = z.object({
+  description: z.string(),
+  ingredients: z.string(),
+  time_minutes: z.number().nullable(),
+});
+
 export const Recipe = z.object({
   id: z.string(),
   name: z.string(),
@@ -38,6 +59,7 @@ export const Recipe = z.object({
   // cards, the detail page) doesn't need to change.
   ingredients: z.array(z.string()),
   ingredientDetails: z.array(IngredientDetail),
+  steps: z.array(CookingStep),
   time: z.number(),
   categories: z.array(z.string()),
   image_url: z.string().min(1),
@@ -105,6 +127,23 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
     .filter((parsed) => parsed.success)
     .map((parsed) => parsed.data);
 
+  // Same "guard against a stringified JSON column" defensiveness as
+  // ingredient_details above.
+  const rawSteps =
+    typeof row.step_details === "string"
+      ? JSON.parse(row.step_details)
+      : (row.step_details ?? []);
+  const steps: CookingStep[] = (Array.isArray(rawSteps) ? rawSteps : [])
+    .map((detail) => RawCookingStepDetail.safeParse(detail))
+    .filter((parsed) => parsed.success)
+    .map((parsed) => parsed.data)
+    .map((detail, index) => ({
+      number: index + 1,
+      description: detail.description,
+      ingredients: detail.ingredients,
+      timeMinutes: detail.time_minutes,
+    }));
+
   const result = Recipe.safeParse({
     id: String(row.id),
     name: row.name,
@@ -113,6 +152,7 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
     time: row.time ?? 0,
     ingredients: ingredientDetails.map(formatIngredientLine),
     ingredientDetails,
+    steps,
     categories: row.categories ?? [],
     image_url: row.image_url ?? "",
     likes: row.likes ?? 0,
