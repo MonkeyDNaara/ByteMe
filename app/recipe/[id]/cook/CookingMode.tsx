@@ -104,7 +104,7 @@ export default function CookingMode({ recipe }: CookingModeProps) {
           )}
 
           {step.timeMinutes != null && (
-            <div className="flex flex-wrap items-center gap-3 rounded-box bg-base-100 p-4">
+            <div className="flex w-fit max-w-full flex-col items-center gap-3 self-center rounded-box bg-base-100 p-4">
               {!timer && (
                 <button
                   type="button"
@@ -120,30 +120,32 @@ export default function CookingMode({ recipe }: CookingModeProps) {
                   <span className="font-mono text-2xl font-bold">
                     {formatTimer(getRemainingSeconds(timer, now))}
                   </span>
-                  {timer.status === "running" ? (
+                  <div className="flex items-center gap-3">
+                    {timer.status === "running" ? (
+                      <button
+                        type="button"
+                        onClick={() => pauseTimer(stepIndex)}
+                        className="btn btn-outline btn-sm"
+                      >
+                        Pause
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => resumeTimer(stepIndex)}
+                        className="btn btn-outline btn-sm"
+                      >
+                        Resume
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => pauseTimer(stepIndex)}
-                      className="btn btn-outline btn-sm"
+                      onClick={() => stopTimer(stepIndex)}
+                      className="btn btn-ghost btn-sm text-error"
                     >
-                      Pause
+                      Stop
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => resumeTimer(stepIndex)}
-                      className="btn btn-outline btn-sm"
-                    >
-                      Resume
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => stopTimer(stepIndex)}
-                    className="btn btn-ghost btn-sm text-error"
-                  >
-                    Stop
-                  </button>
+                  </div>
                 </>
               )}
 
