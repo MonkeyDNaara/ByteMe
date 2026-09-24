@@ -9,6 +9,7 @@ import { signOut } from "@/app/auth/actions";
 
 type HeaderProps = {
   user: { name: string } | null;
+  canCreateRecipes: boolean;
 };
 
 const NAV_ITEMS = [
@@ -27,7 +28,7 @@ function applyTheme(dark: boolean) {
   root.setAttribute("data-theme", dark ? THEME_DARK : THEME_LIGHT);
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user, canCreateRecipes }: HeaderProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
@@ -155,9 +156,11 @@ export default function Header({ user }: HeaderProps) {
             </Link>
           )}
 
-          <Link href="/create-recipe" className="btn btn-primary btn-sm">
-            + Create Recipe
-          </Link>
+          {canCreateRecipes && (
+            <Link href="/create-recipe" className="btn btn-primary btn-sm">
+              + Create Recipe
+            </Link>
+          )}
         </div>
 
         {/* Mobile Controls */}
@@ -279,13 +282,15 @@ export default function Header({ user }: HeaderProps) {
                 Sign in
               </Link>
             )}
-            <Link
-              href="/create-recipe"
-              onClick={() => setIsMobileOpen(false)}
-              className="btn btn-primary btn-sm mt-2 w-full"
-            >
-              + Create Recipe
-            </Link>
+            {canCreateRecipes && (
+              <Link
+                href="/create-recipe"
+                onClick={() => setIsMobileOpen(false)}
+                className="btn btn-primary btn-sm mt-2 w-full"
+              >
+                + Create Recipe
+              </Link>
+            )}
           </nav>
         </div>
       )}
