@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Footer() {
+type FooterProps = {
+  canCreateRecipes: boolean;
+};
+
+export default function Footer({ canCreateRecipes }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -41,11 +45,13 @@ export default function Footer() {
                   Favorites
                 </Link>
               </li>
-              <li>
-                <Link href="/create-recipe" className="hover:text-primary transition-colors">
-                  Create Recipe
-                </Link>
-              </li>
+              {canCreateRecipes && (
+                <li>
+                  <Link href="/create-recipe" className="hover:text-primary transition-colors">
+                    Create Recipe
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

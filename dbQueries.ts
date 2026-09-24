@@ -436,6 +436,21 @@ export const setCustomShoppingListItemChecked = async (
   `;
 };
 
+// ---------------------------------------------------------------------------
+// Recipe creation permission: signing in alone isn't enough to create a
+// recipe, since that would let anyone who signs up flood the database.
+// Absence of a row (rather than a `false` row for every account) means
+// "not allowed" so ordinary sign-ups need no row written for them at all --
+// only accounts explicitly granted the flag get one.
+// ---------------------------------------------------------------------------
+
+export const canCreateRecipes = async (userId: string): Promise<boolean> => {
+  const rows = await sql`
+    SELECT can_create_recipes FROM user_roles WHERE user_id = ${userId}
+  `;
+  return (rows as { can_create_recipes: boolean }[])[0]?.can_create_recipes ?? false;
+};
+
 export const createRecipe = async (
   prevState: RecipeState,
   formData: FormData,
@@ -445,6 +460,13 @@ export const createRecipe = async (
     return {
       success: false,
       message: "You must be signed in to create a recipe",
+    };
+  }
+
+  if (!(await canCreateRecipes(session.user.id))) {
+    return {
+      success: false,
+      message: "Your account isn't approved to create recipes yet.",
     };
   }
 
