@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 
 import BackButton from "@/app/components/BackButton";
+import ActiveTimers from "@/app/recipe/[id]/cook/ActiveTimers";
+import { formatTimer, getRemainingSeconds, useCookingTimers } from "@/lib/cookingTimers";
 import { isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
 
 type CookingModeProps = {
@@ -17,6 +19,19 @@ export default function CookingMode({ recipe }: CookingModeProps) {
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === recipe.steps.length - 1;
 
+  const {
+    timers,
+    getTimer,
+    now,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    stopTimer,
+    clearAllTimers,
+  } = useCookingTimers(recipe.id);
+
+  const timer = getTimer(stepIndex);
+
   return (
     <div className="flex flex-col">
       <div className="sticky top-16 z-10 flex items-center justify-between border-b border-base-300 bg-base-100/90 px-4 py-3 backdrop-blur-md sm:px-6">
@@ -26,7 +41,11 @@ export default function CookingMode({ recipe }: CookingModeProps) {
         </span>
       </div>
 
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 sm:px-6">
+      <div
+        className={`mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-8 sm:px-6 ${
+          timers.length > 0 ? "pb-24" : ""
+        }`}
+      >
         <p className="text-sm font-medium text-base-content/60">{recipe.name}</p>
 
         <div className="relative h-64 w-full overflow-hidden rounded-box sm:h-80">
@@ -58,9 +77,14 @@ export default function CookingMode({ recipe }: CookingModeProps) {
         </div>
 
         <div className="card flex flex-col gap-4 bg-base-200 p-6 shadow-md sm:p-8">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-content">
-            {stepIndex + 1}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-content">
+              {stepIndex + 1}
+            </span>
+            {step.title && (
+              <span className="text-lg font-semibold">{step.title}</span>
+            )}
+          </div>
 
           <p className="text-lg leading-relaxed">{step.description}</p>
 
@@ -78,6 +102,65 @@ export default function CookingMode({ recipe }: CookingModeProps) {
               )}
             </div>
           )}
+
+          {step.timeMinutes != null && (
+            <div className="flex flex-wrap items-center gap-3 rounded-box bg-base-100 p-4">
+              {!timer && (
+                <button
+                  type="button"
+                  onClick={() => startTimer(stepIndex, step.timeMinutes!)}
+                  className="btn btn-primary btn-sm"
+                >
+                  Start Timer ({step.timeMinutes} min)
+                </button>
+              )}
+
+              {timer && timer.status !== "completed" && (
+                <>
+                  <span className="font-mono text-2xl font-bold">
+                    {formatTimer(getRemainingSeconds(timer, now))}
+                  </span>
+                  {timer.status === "running" ? (
+                    <button
+                      type="button"
+                      onClick={() => pauseTimer(stepIndex)}
+                      className="btn btn-outline btn-sm"
+                    >
+                      Pause
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => resumeTimer(stepIndex)}
+                      className="btn btn-outline btn-sm"
+                    >
+                      Resume
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => stopTimer(stepIndex)}
+                    className="btn btn-ghost btn-sm text-error"
+                  >
+                    Stop
+                  </button>
+                </>
+              )}
+
+              {timer && timer.status === "completed" && (
+                <>
+                  <span className="text-lg font-bold text-primary">Done!</span>
+                  <button
+                    type="button"
+                    onClick={() => stopTimer(stepIndex)}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    Dismiss
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-4">
@@ -91,7 +174,11 @@ export default function CookingMode({ recipe }: CookingModeProps) {
           </button>
 
           {isLast ? (
-            <Link href={`/recipe/${recipe.id}`} className="btn btn-primary">
+            <Link
+              href={`/recipe/${recipe.id}`}
+              onClick={clearAllTimers}
+              className="btn btn-primary"
+            >
               Finish
             </Link>
           ) : (
@@ -105,6 +192,16 @@ export default function CookingMode({ recipe }: CookingModeProps) {
           )}
         </div>
       </div>
+
+      <ActiveTimers
+        timers={timers}
+        steps={recipe.steps}
+        now={now}
+        onJumpToStep={setStepIndex}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onStop={stopTimer}
+      />
     </div>
   );
 }

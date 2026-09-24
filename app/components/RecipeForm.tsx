@@ -25,6 +25,7 @@ import {
 // position in the array (see dbQueries.ts's replaceSteps), so the editing
 // state only needs to track the fields a step actually carries.
 type StepFormValue = {
+  title: string;
   description: string;
   ingredients: string;
   timeMinutes: number | null;
@@ -68,6 +69,7 @@ export default function RecipeForm({
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
+  const [stepTitle, setStepTitle] = useState("");
   const [stepDescription, setStepDescription] = useState("");
   const [stepIngredients, setStepIngredients] = useState("");
   const [stepTimeMinutes, setStepTimeMinutes] = useState("");
@@ -110,6 +112,7 @@ export default function RecipeForm({
   };
 
   const resetStepInputs = () => {
+    setStepTitle("");
     setStepDescription("");
     setStepIngredients("");
     setStepTimeMinutes("");
@@ -125,6 +128,7 @@ export default function RecipeForm({
       parsedTime != null && Number.isFinite(parsedTime) ? parsedTime : null;
 
     const value: StepFormValue = {
+      title: stepTitle.trim(),
       description,
       ingredients: stepIngredients.trim(),
       timeMinutes,
@@ -146,6 +150,7 @@ export default function RecipeForm({
 
   const startEditStep = (index: number) => {
     const step = steps[index];
+    setStepTitle(step.title);
     setStepDescription(step.description);
     setStepIngredients(step.ingredients);
     setStepTimeMinutes(step.timeMinutes != null ? String(step.timeMinutes) : "");
@@ -367,6 +372,14 @@ export default function RecipeForm({
           ref={stepFormRef}
           className="flex flex-col gap-2 rounded-box border border-base-300 p-3"
         >
+          <input
+            type="text"
+            value={stepTitle}
+            onChange={(event) => setStepTitle(event.target.value)}
+            placeholder="Title (optional), e.g. Baking"
+            aria-label="Step title"
+            className="input input-bordered w-full"
+          />
           <textarea
             id="step-description"
             value={stepDescription}
@@ -424,7 +437,10 @@ export default function RecipeForm({
                 }`}
               >
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold">Step {index + 1}</p>
+                  <p className="font-semibold">
+                    Step {index + 1}
+                    {step.title ? ` · ${step.title}` : ""}
+                  </p>
                   <p className="text-base-content/80">{step.description}</p>
                   {(step.ingredients || step.timeMinutes != null) && (
                     <p className="text-xs text-base-content/60">
@@ -487,6 +503,7 @@ export default function RecipeForm({
             type="hidden"
             name="steps"
             value={JSON.stringify({
+              title: step.title,
               description: step.description,
               ingredients: step.ingredients,
               timeMinutes: step.timeMinutes,

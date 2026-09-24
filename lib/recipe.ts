@@ -34,6 +34,7 @@ export function formatIngredientLine(detail: IngredientDetail): string {
 // separate stored field either.
 export const CookingStep = z.object({
   number: z.number().int(),
+  title: z.string(),
   description: z.string(),
   ingredients: z.string(),
   timeMinutes: z.number().nullable(),
@@ -44,6 +45,7 @@ export type CookingStep = z.infer<typeof CookingStep>;
 // Matches the raw shape of one entry in the step_details JSON subquery
 // (snake_case, no `number`) before `mapRowToRecipe` adds the array index.
 const RawCookingStepDetail = z.object({
+  title: z.string(),
   description: z.string(),
   ingredients: z.string(),
   time_minutes: z.number().nullable(),
@@ -139,6 +141,7 @@ function mapRowToRecipe(row: Record<string, unknown>): Recipe | null {
     .map((parsed) => parsed.data)
     .map((detail, index) => ({
       number: index + 1,
+      title: detail.title,
       description: detail.description,
       ingredients: detail.ingredients,
       timeMinutes: detail.time_minutes,

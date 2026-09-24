@@ -30,6 +30,7 @@ const ingredientInputSchema = z.object({
 // order at save time (see replaceSteps below), the same way an ingredient's
 // position is just its position in the array, not a separate field.
 const stepInputSchema = z.object({
+  title: z.string().trim(),
   description: z.string().trim().min(1, "Step description is required"),
   ingredients: z.string().trim(),
   timeMinutes: z.number().positive("Time must be positive").nullable(),
@@ -110,15 +111,16 @@ async function replaceSteps(recipeId: number, steps: RecipeInput["steps"]) {
   if (steps.length === 0) return;
 
   const stepNumbers = steps.map((_, index) => index + 1);
+  const titles = steps.map((step) => step.title);
   const descriptions = steps.map((step) => step.description);
   const ingredientsNotes = steps.map((step) => step.ingredients);
   const timeMinutes = steps.map((step) => step.timeMinutes);
 
   await sql`
-    INSERT INTO recipe_steps (recipe_id, step_number, description, ingredients, time_minutes)
-    SELECT ${recipeId}, step.step_number, step.description, step.ingredients, step.time_minutes
-    FROM unnest(${stepNumbers}::int[], ${descriptions}::text[], ${ingredientsNotes}::text[], ${timeMinutes}::int[])
-      AS step(step_number, description, ingredients, time_minutes)
+    INSERT INTO recipe_steps (recipe_id, step_number, title, description, ingredients, time_minutes)
+    SELECT ${recipeId}, step.step_number, step.title, step.description, step.ingredients, step.time_minutes
+    FROM unnest(${stepNumbers}::int[], ${titles}::text[], ${descriptions}::text[], ${ingredientsNotes}::text[], ${timeMinutes}::int[])
+      AS step(step_number, title, description, ingredients, time_minutes)
   `;
 }
 
@@ -162,7 +164,7 @@ export const getRecipeById = async (id: number): Promise<Recipe[]> => {
         WHERE ri.recipe_id = recipes.id
       ) AS ingredient_details,
       (
-        SELECT COALESCE(json_agg(json_build_object('description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
         FROM recipe_steps rs
         WHERE rs.recipe_id = recipes.id
       ) AS step_details
@@ -194,7 +196,7 @@ export const getRecipes = async (): Promise<Recipe[]> => {
         WHERE ri.recipe_id = recipes.id
       ) AS ingredient_details,
       (
-        SELECT COALESCE(json_agg(json_build_object('description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
         FROM recipe_steps rs
         WHERE rs.recipe_id = recipes.id
       ) AS step_details
@@ -644,7 +646,7 @@ export const searchRecipes = async (search: string): Promise<Recipe[]> => {
         WHERE ri.recipe_id = recipes.id
       ) AS ingredient_details,
       (
-        SELECT COALESCE(json_agg(json_build_object('description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
+        SELECT COALESCE(json_agg(json_build_object('title', rs.title, 'description', rs.description, 'ingredients', rs.ingredients, 'time_minutes', rs.time_minutes) ORDER BY rs.step_number), '[]'::json)
         FROM recipe_steps rs
         WHERE rs.recipe_id = recipes.id
       ) AS step_details
