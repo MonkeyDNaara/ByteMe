@@ -10,7 +10,7 @@ export default function Footer({ canCreateRecipes }: FooterProps) {
 
   return (
     <footer className="border-t border-base-200 bg-base-100 text-base-content">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           {/* Spalte 1: App Info */}
           <div className="space-y-2">
