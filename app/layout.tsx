@@ -4,7 +4,6 @@ import "./globals.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import PixelReveal from "./components/PixelReveal";
 import { auth } from "@/lib/auth/server";
 import { canCreateRecipes } from "@/dbQueries";
 
@@ -44,8 +43,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Header user={user} canCreateRecipes={canCreate} />
 
         <div className="relative flex flex-1 flex-col">
-          <PixelReveal />
-
           <main className="flex-1">{children}</main>
 
           <Footer user={user} canCreateRecipes={canCreate} />
