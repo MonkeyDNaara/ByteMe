@@ -1,6 +1,7 @@
 import z from "zod";
 
 import {
+  getRandomRecipeId as dbGetRandomRecipeId,
   getRecipeById as dbGetRecipeById,
   getRecipes as dbGetRecipes,
   searchRecipes as dbSearchRecipes,
@@ -198,6 +199,12 @@ export async function getRecipeById(id: string): Promise<Recipe | null> {
   const rows = await dbGetRecipeById(numericId);
   const row = rows[0];
   return row ? mapRowToRecipe(row) : null;
+}
+
+/** One random recipe (picked by the database), or `null` if there are none. */
+export async function getRandomRecipe(): Promise<Recipe | null> {
+  const id = await dbGetRandomRecipeId();
+  return id === null ? null : getRecipeById(String(id));
 }
 
 /**
