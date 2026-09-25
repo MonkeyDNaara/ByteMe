@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
           <main className="flex-1">{children}</main>
 
-          <Footer canCreateRecipes={canCreate} />
+          <Footer user={user} canCreateRecipes={canCreate} />
         </div>
       </body>
     </html>
