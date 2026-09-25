@@ -227,7 +227,17 @@ function dailyIndex(salt: string, length: number): number {
 export async function getRecipesOfTheDay(): Promise<
   { meal: MealType; recipe: Recipe }[]
 > {
-  const recipes = await getAllRecipes();
+  return pickRecipesOfTheDay(await getAllRecipes());
+}
+
+/**
+ * Pure version of `getRecipesOfTheDay` for an already-fetched list, so a page
+ * that needs all recipes anyway (e.g. the home page's search suggestions)
+ * only has to load them from the DB once.
+ */
+export function pickRecipesOfTheDay(
+  recipes: Recipe[],
+): { meal: MealType; recipe: Recipe }[] {
   const used = new Set<string>();
   const picks: { meal: MealType; recipe: Recipe }[] = [];
 
