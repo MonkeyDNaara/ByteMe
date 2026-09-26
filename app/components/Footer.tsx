@@ -11,7 +11,7 @@ const EXPLORE_LINKS = [
   { label: "All recipes", href: "/all-recipes" },
   { label: "Favorites", href: "/favorites" },
   { label: "Shopping list", href: "/shopping-list" },
-  { label: "Surprise me 🎲", href: "/recipe/random" },
+  { label: "Surprise me 🎲", href: "/random" },
 ];
 
 const GITHUB_URL = "https://github.com/MonkeyDNaara/ByteMe";

@@ -29,7 +29,7 @@ const FEATURES = [
     title: "Cook",
     text: "Cooking mode walks you through every step — with timers that keep running in the background.",
     cta: "Try a recipe",
-    href: "/recipe/random",
+    href: "/random",
   },
   {
     emoji: "🛒",
@@ -127,7 +127,7 @@ export default async function Home() {
 
           {/* Mobile version of "Can't decide?" */}
           <Link
-            href="/recipe/random"
+            href="/random"
             className="flex h-13 items-center gap-3 rounded-2xl bg-base-300 px-4 font-semibold lg:hidden"
           >
             <span aria-hidden="true" className="text-xl">
@@ -151,7 +151,7 @@ export default async function Home() {
             <p className="text-base-content/70">Let us pick a random recipe for you from the whole collection.</p>
           </div>
           <Link
-            href="/recipe/random"
+            href="/random"
             className="btn h-12 w-fit rounded-full border-none bg-base-content px-6 text-base-100 hover:bg-base-content/85"
           >
             Surprise me →

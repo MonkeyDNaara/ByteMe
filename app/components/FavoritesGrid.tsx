@@ -29,7 +29,7 @@ export default function FavoritesGrid({ recipes, initialFavoriteIds, initialFilt
         title="No favorites yet"
         text="Tap the ♡ on any recipe you like — it lands right here, ready for later."
         primary={{ label: "Browse recipes", href: "/all-recipes" }}
-        secondary={{ label: "🎲 or let us surprise you", href: "/recipe/random" }}
+        secondary={{ label: "🎲 or let us surprise you", href: "/random" }}
       />
     );
   }

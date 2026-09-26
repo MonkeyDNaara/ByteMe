@@ -20,7 +20,7 @@ const NAV_ITEMS = [
 ];
 
 // Mobile menu only -- on desktop, Home's "Can't decide?" card covers this.
-const SURPRISE_ITEM = { label: "Surprise me", href: "/recipe/random", emoji: "🎲" };
+const SURPRISE_ITEM = { label: "Surprise me", href: "/random", emoji: "🎲" };
 
 const THEME_LIGHT = "bytemepastel";
 const THEME_DARK = "bytemepastel-dark";

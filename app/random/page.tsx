@@ -5,6 +5,10 @@ import { getRandomRecipe } from "@/lib/recipe";
 
 export const dynamic = "force-dynamic";
 
+// Lives at /random, NOT /recipe/random: the recipe modal intercepts every
+// soft navigation to /recipe/<anything> via app/@modal/(.)recipe/[id], and
+// interception doesn't care that a static "random" folder exists next to [id].
+// "random" would have been treated as a recipe id -> "not found".
 export default async function RandomRecipePage() {
   // The random pick happens in the database, not during render: a component
   // must return the same output for the same input (React's purity rule).
@@ -26,7 +30,7 @@ export default async function RandomRecipePage() {
           <RecipeCard recipe={recipe} />
         </div>
 
-        <form action="/recipe/random" method="get">
+        <form action="/random" method="get">
           <button type="submit" className="btn btn-primary">
             Try again
           </button>
