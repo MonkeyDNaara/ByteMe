@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import CustomShoppingListSection from "@/app/shopping-list/CustomShoppingListSection";
-import RemoveFromShoppingListButton from "@/app/shopping-list/RemoveFromShoppingListButton";
-import ShoppingListItemRow from "@/app/shopping-list/ShoppingListItemRow";
+import CustomShoppingListSection from "./CustomShoppingListSection";
+import RemoveFromShoppingListButton from "./RemoveFromShoppingListButton";
+import ShoppingListItemRow from "./ShoppingListItemRow";
 import { auth } from "@/lib/auth/server";
 import { getAllRecipes } from "@/lib/recipe";
 import {

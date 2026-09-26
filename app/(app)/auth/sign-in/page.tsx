@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import AuthForm from "@/app/auth/AuthForm";
+import AuthForm from "../AuthForm";
 import { auth } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import { requestPasswordReset } from "@/app/auth/actions";
+import { requestPasswordReset } from "@/lib/auth/actions";
 
 export default function ForgotPasswordForm() {
   const [state, formAction, isPending] = useActionState(
