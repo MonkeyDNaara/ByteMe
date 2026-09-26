@@ -23,7 +23,7 @@ export default async function RandomRecipePage() {
         </div>
 
         <div className="w-full max-w-md">
-          <RecipeCard recipe={recipe} href={`/recipe/${recipe.id}`} />
+          <RecipeCard recipe={recipe} />
         </div>
 
         <form action="/recipe/random" method="get">

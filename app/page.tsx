@@ -182,7 +182,7 @@ export default async function Home() {
           <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
             {recipesOfTheDay.map(({ meal, recipe }) => (
               <div key={recipe.id} className="grid w-[290px] shrink-0 snap-start md:w-auto">
-                <RecipeCard meal={meal} recipe={recipe} href={`/recipe/${recipe.id}`} />
+                <RecipeCard meal={meal} recipe={recipe} />
               </div>
             ))}
           </div>

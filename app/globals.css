@@ -119,3 +119,12 @@
   --depth: 1;
   --noise: 0;
 }
+
+/* Pages with a fixed bottom action bar on phones (recipe detail) mark it with
+   `data-bottom-bar`. `:has()` lets the toast move up above that bar -- pure CSS,
+   no JavaScript needed. */
+@media (width < 64rem) {
+  body:has([data-bottom-bar]) .toast {
+    margin-bottom: 5.5rem;
+  }
+}

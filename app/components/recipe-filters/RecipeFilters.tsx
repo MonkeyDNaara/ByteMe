@@ -383,7 +383,6 @@ export default function RecipeFilters({ recipes, initialFilters }: RecipeFilters
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                href={`/recipe/${recipe.id}`}
                 highlightTags={filters.labels}
               />
             ))}
