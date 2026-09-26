@@ -79,13 +79,15 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
       }}
-      className="relative w-full"
+      // Home: full width. Elsewhere: sits on the right (ml-auto) and only
+      // takes the whole row while open on smaller screens.
+      className={`relative ${defaultOpen ? "w-full" : `ml-auto ${isExpanded ? "w-full lg:w-auto" : "w-auto"}`}`}
     >
       <form
         role="search"
         onSubmit={handleSubmit}
         className={`flex h-12 max-w-full items-center gap-1 rounded-full border bg-base-200 pl-4 pr-1 transition-all duration-800 ease-in-out ${
-          defaultOpen ? "w-full" : isExpanded ? "w-full sm:w-[560px]" : "w-[148px]"
+          defaultOpen ? "w-full" : isExpanded ? "w-full lg:w-[560px]" : "w-[148px]"
         } ${
           isActive ? "border-primary shadow-[0_0_0_4px] shadow-primary/25" : "border-base-300 shadow-sm"
         }`}
@@ -148,7 +150,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
       {/* Suggestions dropdown */}
       {query && isActive && (
         <div
-          className={`absolute left-0 z-30 mt-2 w-full ${defaultOpen ? "" : "sm:w-[560px]"} max-w-full overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-lg`}
+          className={`absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-lg`}
         >
           {suggestions.length > 0 ? (
             <>
