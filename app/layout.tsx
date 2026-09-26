@@ -26,7 +26,9 @@ export const metadata: Metadata = {
   description: "Discover, save and share recipes",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+// `modal` is the @modal parallel route slot (app/@modal): it renders next to
+// the page, which is how a recipe can open as a modal on top of a list.
+export default async function RootLayout({ children, modal }: LayoutProps<"/">) {
   const { data: session } = await auth.getSession();
   const user = session?.user ? { name: session.user.name } : null;
   const canCreate = session?.user
@@ -51,6 +53,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
             <Footer user={user} canCreateRecipes={canCreate} />
           </div>
+
+          {modal}
         </ToastProvider>
       </body>
     </html>
