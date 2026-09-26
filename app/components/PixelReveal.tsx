@@ -5,7 +5,7 @@ import { useLayoutEffect, useRef } from "react";
 const PIXEL_SIZE = 10;
 const DURATION = 1600;
 
-// Dein Header hat h-16 = 64px
+// The header is h-16 = 64px
 const HEADER_HEIGHT = 64;
 
 function hash(x: number, y: number, seed = 0) {
@@ -69,12 +69,12 @@ export default function PixelReveal() {
       const elapsed = time - startTime;
       const progress = Math.min(elapsed / DURATION, 1);
 
-      // Canvas bei jedem Frame transparent zurücksetzen
+      // Clear the canvas to transparent on every frame
       context.clearRect(0, 0, width, height);
 
       /*
-       * Position des Content-Wrappers im gesamten Dokument.
-       * Dadurch funktioniert der Effekt auch beim Scrollen.
+       * Position of the content wrapper within the whole document.
+       * This keeps the effect correct while scrolling.
        */
       const containerDocumentTop = container.getBoundingClientRect().top + window.scrollY;
 
@@ -89,8 +89,8 @@ export default function PixelReveal() {
           const y = row * PIXEL_SIZE;
 
           /*
-           * Wo befindet sich dieser sichtbare Pixel
-           * innerhalb des gesamten Content-Bereichs?
+           * Where is this visible pixel located
+           * within the whole content area?
            */
           const documentY = window.scrollY + HEADER_HEIGHT + y;
 
@@ -99,9 +99,9 @@ export default function PixelReveal() {
           const verticalProgress = Math.min(Math.max(contentY / totalHeight, 0), 1);
 
           /*
-           * Deterministischer Zufall:
-           * Pixel flackern nicht bei jedem Frame neu,
-           * wirken aber trotzdem leicht random.
+           * Deterministic randomness:
+           * pixels don't flicker on every frame,
+           * but still look slightly random.
            */
           const absoluteRow = Math.floor(contentY / PIXEL_SIZE);
 
@@ -110,14 +110,14 @@ export default function PixelReveal() {
           const revealAt = Math.min(verticalProgress * 0.84 + jitter, 1);
 
           /*
-           * Bereits freigelegte Pixel werden gar nicht mehr gezeichnet.
-           * Dort sieht man direkt die Website darunter.
+           * Already revealed pixels are not drawn at all,
+           * so the page underneath shows through.
            */
           if (progress >= revealAt) {
             continue;
           }
 
-          // Ruhige Markenfarb-Verteilung
+          // Calm distribution of brand colors
           const colorRandom = hash(column, absoluteRow, 2);
 
           let color = base;
