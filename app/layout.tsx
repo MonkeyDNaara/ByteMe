@@ -4,7 +4,7 @@ import "./globals.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import PixelReveal from "./components/PixelReveal";
+import { ToastProvider } from "./components/toast/ToastProvider";
 import { auth } from "@/lib/auth/server";
 import { canCreateRecipes } from "@/dbQueries";
 
@@ -41,15 +41,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           some browsers can otherwise introduce a page-wide horizontal
           scrollbar. */}
       <body className="flex min-h-full flex-col overflow-x-hidden">
-        <Header user={user} canCreateRecipes={canCreate} />
+        {/* A Client Component provider can wrap Server Components: they're
+            passed in as already-rendered `children`. */}
+        <ToastProvider>
+          <Header user={user} canCreateRecipes={canCreate} />
 
-        <div className="relative flex flex-1 flex-col">
-          <PixelReveal />
+          <div className="relative flex flex-1 flex-col">
+            <main className="flex-1">{children}</main>
 
-          <main className="flex-1">{children}</main>
-
-          <Footer canCreateRecipes={canCreate} />
-        </div>
+            <Footer user={user} canCreateRecipes={canCreate} />
+          </div>
+        </ToastProvider>
       </body>
     </html>
   );

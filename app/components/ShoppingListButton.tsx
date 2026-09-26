@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 
+import { useToast } from "@/app/components/toast/ToastProvider";
 import { useShoppingList } from "@/lib/useShoppingList";
 
 type ShoppingListButtonProps = {
@@ -12,14 +12,12 @@ type ShoppingListButtonProps = {
   className?: string;
 };
 
-export default function ShoppingListButton({
-  recipeId,
-  size = "sm",
-  className = "",
-}: ShoppingListButtonProps) {
-  const router = useRouter();
-  const { isOnList, toggleOnList, isLoggedIn } = useShoppingList();
+export default function ShoppingListButton({ recipeId, size = "sm", className = "" }: ShoppingListButtonProps) {
+  const showToast = useToast();
+  const { isOnList, toggleOnList, setOnListState, isLoggedIn } = useShoppingList();
   const active = isOnList(recipeId);
+  // Changing this key remounts the icon, which restarts its CSS animation.
+  const [hopKey, setHopKey] = useState(0);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The button can sit inside a card that is itself a link.
@@ -27,11 +25,25 @@ export default function ShoppingListButton({
     event.stopPropagation();
 
     if (!isLoggedIn) {
-      router.push("/auth/sign-in");
+      showToast({
+        message: "Sign in to use your shopping list",
+        action: { label: "Sign in", href: "/auth/sign-in" },
+      });
       return;
     }
 
+    const nextActive = !active;
     toggleOnList(recipeId);
+
+    if (nextActive) {
+      setHopKey((key) => key + 1);
+      showToast({ message: "🛒 Added to your shopping list", action: { label: "View list", href: "/shopping-list" } });
+    } else {
+      showToast({
+        message: "Removed from your shopping list",
+        action: { label: "Undo", onClick: () => setOnListState(recipeId, true) },
+      });
+    }
   };
 
   return (
@@ -44,7 +56,9 @@ export default function ShoppingListButton({
         active ? "text-primary" : "text-base-content/70"
       } ${size === "md" ? "btn-md text-2xl" : "btn-sm text-lg"} ${className}`}
     >
-      🛒
+      <span key={hopKey} aria-hidden="true" className={`inline-block ${hopKey > 0 ? "motion-safe:animate-hop" : ""}`}>
+        🛒
+      </span>
     </button>
   );
 }

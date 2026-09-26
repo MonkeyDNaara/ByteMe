@@ -1,32 +1,48 @@
 @import "tailwindcss";
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
+@plugin "daisyui" {
+  themes: false;
 }
 
+/* Custom `link` color: readable purple for text links (`primary` is too
+   light to read as text on light backgrounds). The raw value `--link` is set
+   per theme below; this registers it with Tailwind so `text-link`,
+   `border-link`, `decoration-link` etc. exist. `inline` makes the utilities
+   read `var(--link)` directly, so the color switches with data-theme.
+   (Named `--link`, not `--color-link`, to avoid a self-referencing variable.) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-link: var(--link);
+
+  /* Apply the Geist fonts loaded by next/font in app/layout.tsx.
+     Without this, `font-sans` / `font-mono` fall back to system fonts. */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Small feedback animations -> `animate-pop`, `animate-hop`, `animate-toast-in`.
+   Always used with `motion-safe:` so they're skipped for people who turned
+   animations off in their system settings (prefers-reduced-motion). */
+@theme {
+  --animate-pop: pop 320ms ease-out;
+  --animate-hop: hop 420ms ease-out;
+  --animate-toast-in: toast-in 220ms ease-out;
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.35); }
+    100% { transform: scale(1); }
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */
+  @keyframes hop {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    35% { transform: translateY(-5px) rotate(-8deg); }
+    65% { transform: translateY(0) rotate(4deg); }
+  }
 
-@plugin "daisyui" {
-  themes: false;
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 }
 
 @plugin "daisyui/theme" {
@@ -39,6 +55,7 @@ body {
   --color-base-200: #ffffff; /* card background */
   --color-base-300: #f1eefa; /* chips / muted surfaces */
   --color-base-content: #2e2a38; /* body text */
+  --link: #5b3fc4; /* readable purple for text links (primary is too light as text) */
 
   --color-primary: #c9b6ff; /* pastel purple */
   --color-primary-content: #2e2a38;
@@ -75,6 +92,7 @@ body {
   --color-base-200: #2f2440;
   --color-base-300: #43305d;
   --color-base-content: #f1eefa;
+  --link: #c9b6ff;
 
   --color-primary: #c9b6ff;
   --color-primary-content: #221b2e;
