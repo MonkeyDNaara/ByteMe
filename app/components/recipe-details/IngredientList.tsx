@@ -1,6 +1,7 @@
 import type { IngredientDetail } from "@/lib/recipe";
 
-function formatAmount({ amount, unit }: IngredientDetail): string {
+/** "400 g", "2" or "" (no amount). Shared with the shopping list. */
+export function formatAmount({ amount, unit }: Pick<IngredientDetail, "amount" | "unit">): string {
   if (amount == null) return "";
   return unit ? `${amount} ${unit}` : String(amount);
 }
