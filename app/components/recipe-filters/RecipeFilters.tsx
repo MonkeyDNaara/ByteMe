@@ -7,6 +7,7 @@ import {
   DIFFICULTY_LABELS,
   filterRecipes,
   formatLabel,
+  getCategoryGroup,
   getDistinctCategories,
   getDistinctDifficulties,
   type DifficultyLevel,
@@ -35,6 +36,11 @@ export type RecipeFiltersProps = {
 
 const PAGE_SIZE = 12;
 const TOP_LABEL_COUNT = 5;
+
+// Only these taxonomy groups (see CATEGORY_GROUPS in lib/recipe.ts) can
+// become quick-filter chips. Flavor ("Salty"), main ingredient or unknown
+// labels are still available in the Labels dropdown.
+const QUICK_FILTER_GROUPS = new Set(["Meal & Course Type", "Diet & Nutrition", "Cooking Method & Prep"]);
 
 /**
  * "newest" uses `Number(id)` as a proxy for creation order -- ids are
@@ -149,11 +155,12 @@ export default function RecipeFilters({ recipes, initialFilters }: RecipeFilters
     [allCategories],
   );
 
-  // The most-used labels become one-click chips in the bar.
+  // The most-used labels (from the quick-filter groups) become one-click chips.
   const topLabels = useMemo(() => {
     const counts = new Map<string, number>();
     for (const recipe of recipes) {
       for (const category of new Set(recipe.categories.map((c) => c.toLowerCase()))) {
+        if (!QUICK_FILTER_GROUPS.has(getCategoryGroup(category))) continue;
         counts.set(category, (counts.get(category) ?? 0) + 1);
       }
     }
