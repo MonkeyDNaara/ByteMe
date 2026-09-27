@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import EmptyState from "@/app/components/EmptyState";
 import { canCreateRecipes } from "@/dbQueries";
+import { withNext } from "@/lib/auth/safeNext";
 import { auth } from "@/lib/auth/server";
 
 import CreateRecipeForm from "./CreateRecipeForm";
@@ -11,7 +12,7 @@ import CreateRecipeForm from "./CreateRecipeForm";
 // This page re-checks both (defense in depth, like the server actions).
 export default async function CreateRecipePage() {
   const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
+  if (!session?.user) redirect(withNext("/auth/sign-in", "/create-recipe"));
 
   const allowed = await canCreateRecipes(session.user.id);
 
