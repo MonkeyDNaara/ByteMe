@@ -15,6 +15,7 @@ export default function CreateRecipeForm() {
       action={createRecipe}
       submitLabel="Publish recipe"
       pendingLabel="Publishing…"
+      draftScope="create"
       onSuccess={() => {
         showToast({ message: "🎉 Recipe published!" });
         // Newest first, so the new recipe is the first card.

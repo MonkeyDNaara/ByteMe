@@ -6,8 +6,11 @@ import { useRouter } from "next/navigation";
 import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import RecipeCard from "@/app/components/RecipeCard";
 import type { RecipeState } from "@/dbQueries";
+import { z } from "zod";
+
 import { scrollBehavior } from "@/lib/motion";
-import { getCategoryGroup, REQUIRED_CATEGORY_GROUP, type IngredientDetail, type Recipe } from "@/lib/recipe";
+import { getCategoryGroup, IngredientDetail, REQUIRED_CATEGORY_GROUP, type Recipe } from "@/lib/recipe";
+import { useFormDraft } from "@/lib/useFormDraft";
 
 import DifficultyPicker from "./DifficultyPicker";
 import { fieldClass, hintClass, labelClass, required, textareaClass } from "./fieldStyles";
@@ -39,7 +42,27 @@ type RecipeFormProps = {
   onSuccess: () => void;
   /** Edit mode: shows "Delete recipe" in the bottom bar. */
   deleteRecipeId?: number;
+  /** Separate auto-saved draft per form: "create" or "edit:<recipeId>". */
+  draftScope: string;
 };
+
+// Shape of an auto-saved draft (= the form's state, `time` still as typed).
+// Validated when read back from localStorage, see useFormDraft.
+const DraftSchema = z.object({
+  name: z.string(),
+  snippet: z.string(),
+  description: z.string(),
+  time: z.string(),
+  imageUrl: z.string(),
+  ingredients: z.array(IngredientDetail),
+  steps: z.array(
+    z.object({ title: z.string(), description: z.string(), ingredients: z.string(), timeMinutes: z.number().nullable() }),
+  ),
+  categories: z.array(z.string()),
+  difficulty: z.number().int().min(1).max(5).nullable(),
+});
+
+const draftTimeFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
 
 const SNIPPET_MAX = 90;
 
@@ -59,6 +82,7 @@ export default function RecipeForm({
   pendingLabel,
   onSuccess,
   deleteRecipeId,
+  draftScope,
 }: RecipeFormProps) {
   const router = useRouter();
 
@@ -81,11 +105,36 @@ export default function RecipeForm({
 
   const [state, formAction, isPending] = useActionState(action, null);
 
+  // --- Auto-saved draft (localStorage) ---------------------------------------
+  const draft = useFormDraft({
+    scope: draftScope,
+    schema: DraftSchema,
+    values: { name, snippet, description, time, imageUrl, ingredients, steps, categories, difficulty },
+  });
+
+  const restoreDraft = () => {
+    if (!draft.pendingDraft) return;
+    const values = draft.pendingDraft.values;
+    setName(values.name);
+    setSnippet(values.snippet);
+    setDescription(values.description);
+    setTime(values.time);
+    setImageUrl(values.imageUrl);
+    setIngredients(values.ingredients);
+    setSteps(values.steps);
+    setCategories(values.categories);
+    setDifficulty(values.difficulty);
+    draft.markRestored();
+  };
+
   // useEffectEvent (React 19.2): always calls the LATEST onSuccess without
   // making it a dependency. The parents pass a new inline function on every
   // render -- as a dependency, the effect would re-run on each render and
   // navigate / toast several times.
-  const handleSuccess = useEffectEvent(() => onSuccess());
+  const handleSuccess = useEffectEvent(() => {
+    draft.clear(); // published/saved -> the draft has done its job
+    onSuccess();
+  });
   useEffect(() => {
     if (state?.success) handleSuccess();
   }, [state]);
@@ -136,6 +185,9 @@ export default function RecipeForm({
   };
 
   const handleCancel = () => {
+    // A deliberate cancel = "I don't want this" -> no draft next time.
+    // (Drafts protect against accidents: closed tab, back swipe, crash.)
+    draft.clear();
     if (window.history.length > 1) router.back();
     else router.push("/all-recipes");
   };
@@ -163,6 +215,28 @@ export default function RecipeForm({
     // <form> (inside a dialog), and forms must not be nested in HTML. The
     // Publish button still submits via the `form="recipe-form"` attribute.
     <div className="flex flex-col gap-8">
+    {draft.pendingDraft && (
+      <div
+        role="status"
+        className="flex flex-wrap items-center gap-3 rounded-box border border-info/50 bg-info/15 px-4 py-3 sm:px-5"
+      >
+        <span aria-hidden="true" className="text-2xl">
+          📝
+        </span>
+        <p className="min-w-48 flex-1 text-sm">
+          <span className="font-semibold">You have an unsaved draft</span> from{" "}
+          {draftTimeFormat.format(draft.pendingDraft.savedAt)}. Restore it?
+        </p>
+        <div className="flex gap-2">
+          <button type="button" onClick={restoreDraft} className="btn btn-primary h-11 rounded-full px-5">
+            Restore
+          </button>
+          <button type="button" onClick={draft.discard} className="btn btn-ghost h-11 rounded-full px-4">
+            Discard
+          </button>
+        </div>
+      </div>
+    )}
     <form id="recipe-form" action={formAction} onSubmit={handleSubmit} noValidate className="flex flex-col gap-8">
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-6">

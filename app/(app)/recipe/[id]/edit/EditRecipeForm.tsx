@@ -25,6 +25,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
       }}
       submitLabel="Save changes"
       pendingLabel="Saving…"
+      draftScope={`edit:${recipe.id}`}
       deleteRecipeId={Number(recipe.id)}
       // Hard navigation on purpose: a soft one to /recipe/[id] would be
       // intercepted and open the recipe as a modal over this form.
