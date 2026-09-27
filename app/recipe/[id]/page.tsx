@@ -1,155 +1,23 @@
-import Image from "next/image";
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import BackButton from "@/app/components/BackButton";
-import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
-import FavoriteButton from "@/app/components/FavoriteButton";
-import ShoppingListButton from "@/app/components/ShoppingListButton";
-import { auth } from "@/lib/auth/server";
-import {
-  DIFFICULTY_EMOJI,
-  formatLabel,
-  getDifficultyLabel,
-  getRecipeById,
-  isOptimizableImageUrl,
-  isRecipeOwner,
-} from "@/lib/recipe";
+import { loadRecipeDetails } from "@/app/components/recipe-details/loadRecipeDetails";
+import RecipeDetails from "@/app/components/recipe-details/RecipeDetails";
 
 export const dynamic = "force-dynamic";
 
-export default async function RecipeDetailPage({
-  params,
-}: PageProps<"/recipe/[id]">) {
+// Tab title = recipe name. loadRecipeDetails is wrapped in React's cache(),
+// so this and the page share ONE database query per request.
+export async function generateMetadata({ params }: PageProps<"/recipe/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const recipe = await getRecipeById(id);
+  const data = await loadRecipeDetails(id);
+  return { title: data?.recipe.name ?? "Recipe not found" };
+}
 
-  if (!recipe) {
-    notFound();
-  }
+export default async function RecipeDetailPage({ params }: PageProps<"/recipe/[id]">) {
+  const { id } = await params;
+  const data = await loadRecipeDetails(id);
+  if (!data) notFound();
 
-  const { data: session } = await auth.getSession();
-  const isOwner = isRecipeOwner(recipe, session?.user?.id);
-
-  return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <BackButton />
-
-      <div className="relative h-64 overflow-hidden rounded-box sm:h-80">
-        <Image
-          src={recipe.image_url}
-          alt={recipe.name}
-          fill
-          sizes="(min-width: 768px) 768px, 100vw"
-          className="object-cover"
-          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
-          priority
-        />
-      </div>
-
-      <header className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {recipe.name}
-          </h1>
-          <div className="flex items-center gap-2">
-            <ShoppingListButton recipeId={recipe.id} size="md" />
-            <FavoriteButton recipeId={recipe.id} size="md" />
-          </div>
-        </div>
-
-        <p className="text-base-content/80">{recipe.snippet}</p>
-
-        {recipe.author_name && (
-          <p className="text-sm text-base-content/60">
-            by {recipe.author_name}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
-          <span>⏱ {recipe.time} min</span>
-          <span>❤ {recipe.likes} likes</span>
-        </div>
-
-        {recipe.difficulty != null && (
-          <div className="flex items-center gap-2 text-sm text-base-content/70">
-            <span>
-              {Array.from({ length: 5 }, (_, index) => (
-                <span
-                  key={index}
-                  className={index < recipe.difficulty! ? "" : "opacity-25"}
-                >
-                  {DIFFICULTY_EMOJI}
-                </span>
-              ))}
-            </span>
-            <span>{getDifficultyLabel(recipe.difficulty)}</span>
-          </div>
-        )}
-
-        {recipe.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {recipe.categories.map((category, index) => (
-              <span
-                key={`${category}-${index}`}
-                className="badge badge-outline badge-sm"
-              >
-                {formatLabel(category)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {isOwner && (
-          <div className="flex gap-2">
-            <Link
-              href={`/recipe/${recipe.id}/edit`}
-              className="btn btn-outline btn-sm"
-            >
-              Edit
-            </Link>
-            <DeleteRecipeButton
-              recipeId={Number(recipe.id)}
-              redirectTo="/all-recipes"
-            />
-          </div>
-        )}
-      </header>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Ingredients</h2>
-        <ul className="list-inside list-disc space-y-1 text-base-content/80">
-          {recipe.ingredients.map((item, index) => (
-            <li key={`${item}-${index}`}>{item}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Method</h2>
-        <p className="leading-relaxed text-base-content/80">
-          {recipe.description}
-        </p>
-      </section>
-
-      {recipe.steps.length > 0 && (
-        <div className="flex justify-center">
-          <Link href={`/recipe/${recipe.id}/cook`} className="btn btn-primary">
-            Start cooking
-          </Link>
-        </div>
-      )}
-
-      <div className="flex justify-center">
-        <a
-          href="https://leetcode.com/problemset/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary"
-        >
-          Start cooking (for real software developer)
-        </a>
-      </div>
-    </div>
-  );
+  return <RecipeDetails variant="page" {...data} />;
 }
