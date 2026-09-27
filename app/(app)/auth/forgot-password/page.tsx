@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import ForgotPasswordForm from "@/app/auth/forgot-password/ForgotPasswordForm";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Reset password",

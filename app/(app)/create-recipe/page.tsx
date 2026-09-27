@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import CreateRecipeForm from "@/app/create-recipe/CreateRecipeForm";
+import CreateRecipeForm from "./CreateRecipeForm";
 import { auth } from "@/lib/auth/server";
 import { canCreateRecipes } from "@/dbQueries";
 

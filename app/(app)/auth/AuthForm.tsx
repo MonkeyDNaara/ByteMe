@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import { signIn, signUp } from "@/app/auth/actions";
+import { signIn, signUp } from "@/lib/auth/actions";
 
 type AuthFormProps = {
   mode: "sign-in" | "sign-up";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import { resetPassword } from "@/app/auth/actions";
+import { resetPassword } from "@/lib/auth/actions";
 
 type ResetPasswordFormProps = {
   token: string;

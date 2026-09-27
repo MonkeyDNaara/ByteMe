@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import EditRecipeForm from "@/app/recipe/[id]/edit/EditRecipeForm";
+import EditRecipeForm from "./EditRecipeForm";
 import { auth } from "@/lib/auth/server";
 import { getRecipeById, isRecipeOwner } from "@/lib/recipe";
 
