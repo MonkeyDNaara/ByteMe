@@ -1,8 +1,27 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type Announcements,
+  type DragEndEvent,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-import { scrollBehavior } from "@/lib/motion";
+import { scrollBehavior, usePrefersReducedMotion } from "@/lib/motion";
 
 import { fieldClass, textareaClass } from "./fieldStyles";
 
@@ -21,22 +40,62 @@ type StepsEditorProps = {
 const iconButton =
   "hit-area relative flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors hover:bg-base-300 disabled:opacity-30 disabled:hover:bg-transparent";
 
+// Stable ids for drag & drop. A sortable list can't use `key={index}`: when a
+// card moves, React (and dnd-kit) would keep the POSITION's identity instead
+// of the card's. Each step object gets an id the first time we see it -- like
+// a primary key vs. a row number. Moving a step keeps the same object (same
+// id); editing creates a new object (new id), which is fine. A WeakMap lets
+// removed steps be garbage-collected, and the ids never reach the server.
+const stepIds = new WeakMap<StepFormValue, string>();
+let nextStepId = 0;
+function idFor(step: StepFormValue): string {
+  let id = stepIds.get(step);
+  if (!id) {
+    nextStepId += 1;
+    id = `step-${nextStepId}`;
+    stepIds.set(step, id);
+  }
+  return id;
+}
+
 /** Controlled like IngredientsEditor: the steps live in the parent, the draft card here. */
 export default function StepsEditor({ value, onChange }: StepsEditorProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [minutes, setMinutes] = useState("");
-  // null = the draft card adds a new step; a number = it edits that step.
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  // null = the draft card adds a new step; otherwise the step being edited.
+  // Tracked by object (not index), so it stays right when steps are moved.
+  const [editing, setEditing] = useState<StepFormValue | null>(null);
   const draftRef = useRef<HTMLDivElement>(null);
+  const dndId = useId();
+
+  const ids = value.map(idFor);
+  const positionOf = (id: UniqueIdentifier) => ids.indexOf(String(id)) + 1;
+
+  const sensors = useSensors(
+    // 5px before a drag starts, so a normal click/tap on the handle doesn't count as a drag.
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // Keyboard: focus the handle, Space to pick up, arrow keys to move, Space to drop.
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  // Screen-reader messages in "step 3" words instead of internal ids.
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `Picked up step ${positionOf(active.id)}.`,
+    onDragOver: ({ active, over }) =>
+      over ? `Step ${positionOf(active.id)} is over position ${positionOf(over.id)}.` : "Not over a position.",
+    onDragEnd: ({ active, over }) =>
+      over ? `Step ${positionOf(active.id)} moved to position ${positionOf(over.id)}.` : "Step dropped.",
+    onDragCancel: ({ active }) => `Moving step ${positionOf(active.id)} was cancelled.`,
+  };
 
   const resetDraft = () => {
     setTitle("");
     setDescription("");
     setIngredients("");
     setMinutes("");
-    setEditingIndex(null);
+    setEditing(null);
   };
 
   const save = () => {
@@ -49,100 +108,111 @@ export default function StepsEditor({ value, onChange }: StepsEditorProps) {
       ingredients: ingredients.trim(),
       timeMinutes: parsed != null && Number.isFinite(parsed) && parsed > 0 ? parsed : null,
     };
-    onChange(editingIndex === null ? [...value, step] : value.map((s, i) => (i === editingIndex ? step : s)));
+    onChange(editing === null ? [...value, step] : value.map((s) => (s === editing ? step : s)));
     resetDraft();
   };
 
-  const startEdit = (index: number) => {
-    const step = value[index];
+  const startEdit = (step: StepFormValue) => {
     setTitle(step.title);
     setDescription(step.description);
     setIngredients(step.ingredients);
     setMinutes(step.timeMinutes != null ? String(step.timeMinutes) : "");
-    setEditingIndex(index);
+    setEditing(step);
     draftRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
   };
 
   const remove = (index: number) => {
+    if (value[index] === editing) resetDraft();
     onChange(value.filter((_, i) => i !== index));
-    if (editingIndex === index) resetDraft();
-    else if (editingIndex !== null && index < editingIndex) setEditingIndex(editingIndex - 1);
   };
 
+  // ↑ / ↓ stay as the non-drag alternative (WCAG 2.2 · 2.5.7 Dragging Movements).
   const move = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= value.length) return;
-    const next = [...value];
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
-    if (editingIndex === index) setEditingIndex(target);
-    else if (editingIndex === target) setEditingIndex(index);
+    onChange(arrayMove(value, index, target));
   };
 
-  const draftNumber = editingIndex === null ? value.length + 1 : editingIndex + 1;
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    onChange(arrayMove(value, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))));
+  };
+
+  const draftNumber = editing === null ? value.length + 1 : value.indexOf(editing) + 1;
 
   return (
     <div className="flex flex-col gap-3">
       {value.length > 0 && (
-        <ol className="flex flex-col gap-3">
-          {value.map((step, index) => (
-            <li
-              key={index}
-              className={`flex gap-4 rounded-2xl border bg-base-100 p-4 ${
-                editingIndex === index ? "border-primary" : "border-base-300"
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-primary-content"
-              >
-                {index + 1}
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="font-bold">{step.title || `Step ${index + 1}`}</span>
-                <p className="text-sm leading-relaxed text-base-content/75">{step.description}</p>
-                {(step.ingredients || step.timeMinutes) && (
-                  <p className="text-sm text-base-content/70">
-                    {[step.ingredients && `🥣 ${step.ingredients}`, step.timeMinutes && `⏱ ${step.timeMinutes} min`]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                )}
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-start">
-                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label={`Move step ${index + 1} up`} className={iconButton}>
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(index, 1)}
-                  disabled={index === value.length - 1}
-                  aria-label={`Move step ${index + 1} down`}
-                  className={iconButton}
-                >
-                  ↓
-                </button>
-                <button type="button" onClick={() => startEdit(index)} aria-label={`Edit step ${index + 1}`} className={iconButton}>
-                  ✏️
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  aria-label={`Delete step ${index + 1}`}
-                  className={`${iconButton} hover:bg-error/15 hover:text-error`}
-                >
-                  🗑
-                </button>
-              </div>
-            </li>
-          ))}
-        </ol>
+        <DndContext
+          id={dndId}
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          accessibility={{
+            announcements,
+            screenReaderInstructions: {
+              draggable:
+                "To reorder, press Space to pick up the step, use the arrow keys to move it, and Space again to drop it. Press Escape to cancel.",
+            },
+          }}
+        >
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <ol className="flex flex-col gap-3">
+              {value.map((step, index) => (
+                <SortableStep key={ids[index]} id={ids[index]} number={index + 1} isEditing={step === editing}>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="font-bold">{step.title || `Step ${index + 1}`}</span>
+                    <p className="text-sm leading-relaxed text-base-content/75">{step.description}</p>
+                    {(step.ingredients || step.timeMinutes) && (
+                      <p className="text-sm text-base-content/70">
+                        {[step.ingredients && `🥣 ${step.ingredients}`, step.timeMinutes && `⏱ ${step.timeMinutes} min`]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-start">
+                    <button
+                      type="button"
+                      onClick={() => move(index, -1)}
+                      disabled={index === 0}
+                      aria-label={`Move step ${index + 1} up`}
+                      className={iconButton}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(index, 1)}
+                      disabled={index === value.length - 1}
+                      aria-label={`Move step ${index + 1} down`}
+                      className={iconButton}
+                    >
+                      ↓
+                    </button>
+                    <button type="button" onClick={() => startEdit(step)} aria-label={`Edit step ${index + 1}`} className={iconButton}>
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      aria-label={`Delete step ${index + 1}`}
+                      className={`${iconButton} hover:bg-error/15 hover:text-error`}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </SortableStep>
+              ))}
+            </ol>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Draft card: adds a new step or edits an existing one */}
       <div ref={draftRef} className="flex flex-col gap-3 rounded-2xl border-2 border-dashed border-primary/50 p-4">
         <span className="text-sm font-bold text-link">
-          {editingIndex === null ? `Step ${draftNumber}` : `Editing step ${draftNumber}`}
+          {editing === null ? `Step ${draftNumber}` : `Editing step ${draftNumber}`}
         </span>
         <label htmlFor="step-title" className="sr-only">
           Step title
@@ -195,9 +265,9 @@ export default function StepsEditor({ value, onChange }: StepsEditorProps) {
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={save} disabled={!description.trim()} className="btn btn-primary h-11 rounded-full px-5 font-bold">
-            {editingIndex === null ? "+ Add step" : "Save step"}
+            {editing === null ? "+ Add step" : "Save step"}
           </button>
-          {editingIndex !== null && (
+          {editing !== null && (
             <button type="button" onClick={resetDraft} className="btn btn-ghost h-11 rounded-full">
               Cancel
             </button>
@@ -205,10 +275,59 @@ export default function StepsEditor({ value, onChange }: StepsEditorProps) {
         </div>
       </div>
 
-      {/* Unchanged format for the server action */}
+      {/* Unchanged format for the server action (the ids stay client-side) */}
       {value.map((step, index) => (
-        <input key={index} type="hidden" name="steps" value={JSON.stringify(step)} />
+        <input key={ids[index]} type="hidden" name="steps" value={JSON.stringify(step)} />
       ))}
     </div>
+  );
+}
+
+type SortableStepProps = {
+  id: string;
+  number: number;
+  isEditing: boolean;
+  children: ReactNode;
+};
+
+/** One draggable step card. Only the ⠿ handle starts a drag, so scrolling on a phone still works. */
+function SortableStep({ id, number, isEditing, children }: SortableStepProps) {
+  const reduceMotion = usePrefersReducedMotion();
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    // The "slide aside" animation is an inline style, so `motion-safe:` can't turn it off.
+    transition: reduceMotion ? null : undefined,
+  });
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex gap-3 rounded-2xl border bg-base-100 p-4 sm:gap-4 ${
+        isEditing ? "border-primary" : "border-base-300"
+      } ${isDragging ? "relative z-10 shadow-xl ring-2 ring-primary" : ""}`}
+    >
+      {/* Phones: handle above the number (saves width); side by side from sm. */}
+      <div className="flex shrink-0 flex-col items-center gap-1 sm:flex-row sm:items-start sm:gap-2">
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag step ${number} to reorder`}
+          // touch-none: on phones the handle drags instead of scrolling the page.
+          className={`${iconButton} shrink-0 cursor-grab touch-none text-lg text-base-content/70 active:cursor-grabbing`}
+        >
+          ⠿
+        </button>
+        <span
+          aria-hidden="true"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-primary-content"
+        >
+          {number}
+        </span>
+      </div>
+      {children}
+    </li>
   );
 }
