@@ -21,7 +21,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { reset } = await searchParams;
   const notice =
     reset === "success"
-      ? "Your password has been updated. Sign in with your new password."
+      ? "Your password has been updated. Sign in with your new one."
       : undefined;
 
   return <AuthForm mode="sign-in" notice={notice} />;
