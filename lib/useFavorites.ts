@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { authClient } from "@/lib/auth/client";
+import { useSessionUserId } from "@/app/components/SessionProvider";
 import {
   getMyFavoriteIds,
   importLocalFavorites,
@@ -82,8 +82,8 @@ async function loadFavorites(userId: string): Promise<void> {
 }
 
 export function useFavorites() {
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id ?? null;
+  // Server-provided (see SessionProvider) -- updates right after sign-in/out.
+  const userId = useSessionUserId();
   const favorites = useSyncExternalStore(
     subscribe,
     getSnapshot,

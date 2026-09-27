@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { authClient } from "@/lib/auth/client";
+import { useSessionUserId } from "@/app/components/SessionProvider";
 import { getMyShoppingListRecipeIds, setOnShoppingList } from "@/lib/shoppingList";
 
 // Same architecture as lib/useFavorites.ts: a module-level cache backing
@@ -48,8 +48,8 @@ async function loadShoppingList(userId: string): Promise<void> {
 }
 
 export function useShoppingList() {
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id ?? null;
+  // Server-provided (see SessionProvider) -- updates right after sign-in/out.
+  const userId = useSessionUserId();
   const recipeIds = useSyncExternalStore(
     subscribe,
     getSnapshot,
