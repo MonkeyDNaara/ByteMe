@@ -21,6 +21,10 @@ import {
 
 export type RecipeFiltersProps = {
   recipes: Recipe[];
+  /** Labels to preselect, e.g. from `/all-recipes?label=vegetarian`. */
+  initialCategories?: string[];
+  /** Upper time limit to preselect, e.g. from `/all-recipes?maxTime=20`. */
+  initialMaxTime?: number;
 };
 
 type SortOption = "newest" | "time" | "difficulty" | "likes" | "alphabetical";
@@ -67,7 +71,11 @@ function sortRecipes(recipes: Recipe[], sortOption: SortOption): Recipe[] {
   return sorted;
 }
 
-export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
+export default function RecipeFilters({
+  recipes,
+  initialCategories = [],
+  initialMaxTime,
+}: RecipeFiltersProps) {
   const allCategories = useMemo(
     () => getDistinctCategories(recipes),
     [recipes],
@@ -101,13 +109,35 @@ export default function RecipeFilters({ recipes }: RecipeFiltersProps) {
       .filter((group) => group.categories.length > 0);
   }, [allCategories]);
 
+  // Initial values from the URL are only read on the first render (lazy
+  // useState initializer). The page passes a `key` built from the URL params,
+  // so navigating to a different filter link remounts this component and the
+  // initializers run again. Unknown labels are ignored -- otherwise an old or
+  // mistyped link would silently filter the list down to zero recipes.
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
-    new Set(),
+    () => {
+      const known = new Set(allCategories.map((category) => category.toLowerCase()));
+      return new Set(
+        initialCategories
+          .map((category) => category.toLowerCase())
+          .filter((category) => known.has(category)),
+      );
+    },
   );
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<number>>(
     new Set(),
   );
-  const [timeRange, setTimeRange] = useState<TimeRange>(bounds);
+  const [timeRange, setTimeRange] = useState<TimeRange>(() =>
+    initialMaxTime === undefined
+      ? bounds
+      : {
+          min: bounds.min,
+          // Clamp into the real range, so e.g. "Under 20 min" still works
+          // when the quickest recipe takes 25 min (it then shows none of
+          // them, which is honest, but the slider stays valid).
+          max: Math.min(Math.max(initialMaxTime, bounds.min), bounds.max),
+        },
+  );
   const [sortOption, setSortOption] = useState<SortOption>("newest");
 
   const toggleCategory = (category: string) => {

@@ -1,6 +1,7 @@
 import z from "zod";
 
 import {
+  getRandomRecipeId as dbGetRandomRecipeId,
   getRecipeById as dbGetRecipeById,
   getRecipes as dbGetRecipes,
   searchRecipes as dbSearchRecipes,
@@ -200,6 +201,12 @@ export async function getRecipeById(id: string): Promise<Recipe | null> {
   return row ? mapRowToRecipe(row) : null;
 }
 
+/** One random recipe (picked by the database), or `null` if there are none. */
+export async function getRandomRecipe(): Promise<Recipe | null> {
+  const id = await dbGetRandomRecipeId();
+  return id === null ? null : getRecipeById(String(id));
+}
+
 /**
  * A pick that's deterministic for a given (day, salt) pair: the same UTC
  * calendar day and the same salt always produce the same index into a list
@@ -227,7 +234,17 @@ function dailyIndex(salt: string, length: number): number {
 export async function getRecipesOfTheDay(): Promise<
   { meal: MealType; recipe: Recipe }[]
 > {
-  const recipes = await getAllRecipes();
+  return pickRecipesOfTheDay(await getAllRecipes());
+}
+
+/**
+ * Pure version of `getRecipesOfTheDay` for an already-fetched list, so a page
+ * that needs all recipes anyway (e.g. the home page's search suggestions)
+ * only has to load them from the DB once.
+ */
+export function pickRecipesOfTheDay(
+  recipes: Recipe[],
+): { meal: MealType; recipe: Recipe }[] {
   const used = new Set<string>();
   const picks: { meal: MealType; recipe: Recipe }[] = [];
 

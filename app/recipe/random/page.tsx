@@ -1,18 +1,18 @@
 import { redirect } from "next/navigation";
 
 import RecipeCard from "@/app/components/RecipeCard";
-import { getAllRecipes } from "@/lib/recipe";
+import { getRandomRecipe } from "@/lib/recipe";
 
 export const dynamic = "force-dynamic";
 
 export default async function RandomRecipePage() {
-  const recipes = await getAllRecipes();
+  // The random pick happens in the database, not during render: a component
+  // must return the same output for the same input (React's purity rule).
+  const recipe = await getRandomRecipe();
 
-  if (recipes.length === 0) {
+  if (!recipe) {
     redirect("/all-recipes");
   }
-
-  const recipe = recipes[Math.floor(Math.random() * recipes.length)];
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">

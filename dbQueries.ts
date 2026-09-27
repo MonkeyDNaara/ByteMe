@@ -647,6 +647,14 @@ export const deleteRecipe = async (
   }
 };
 
+// Postgres picks the random row (`ORDER BY random()`), so the app never
+// loads every recipe just to choose one. Returns only the id; the full row
+// comes from getRecipeById, so the big SELECT isn't duplicated a 4th time.
+export const getRandomRecipeId = async (): Promise<number | null> => {
+  const result = await sql`SELECT id FROM recipes ORDER BY random() LIMIT 1`;
+  return result.length > 0 ? Number(result[0].id) : null;
+};
+
 export const searchRecipes = async (search: string): Promise<Recipe[]> => {
   const result = sql`
     SELECT
