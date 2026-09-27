@@ -2,6 +2,7 @@
 
 
 import { useToast } from "@/app/components/toast/ToastProvider";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
 import RecipeImage from "@/app/components/RecipeImage";
 import type { Recipe } from "@/lib/recipe";
 import { useFavorites } from "@/lib/useFavorites";
@@ -20,7 +21,7 @@ export default function FinishScreen({ recipe, onBackToSteps, onBackToRecipe, on
 
   const saveToFavorites = () => {
     if (!isLoggedIn) {
-      showToast({ message: "Sign in to save your favorite recipes", action: { label: "Sign in", href: "/auth/sign-in" } });
+      showToast({ message: "Sign in to save your favorite recipes", action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) } });
       return;
     }
     setFavoriteState(recipe.id, true);

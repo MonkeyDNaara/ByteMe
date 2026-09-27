@@ -3,6 +3,7 @@
 import { useState, type MouseEvent } from "react";
 
 import { useToast } from "@/app/components/toast/ToastProvider";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
 import { useShoppingList } from "@/lib/useShoppingList";
 
 type ShoppingListButtonProps = {
@@ -29,7 +30,7 @@ export default function ShoppingListButton({ recipeId, size = "sm", label, class
     if (!isLoggedIn) {
       showToast({
         message: "Sign in to use your shopping list",
-        action: { label: "Sign in", href: "/auth/sign-in" },
+        action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) },
       });
       return;
     }

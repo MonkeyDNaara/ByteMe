@@ -3,6 +3,7 @@
 import { useState, type MouseEvent } from "react";
 
 import { useToast } from "@/app/components/toast/ToastProvider";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
 import { useFavorites } from "@/lib/useFavorites";
 
 type FavoriteButtonProps = {
@@ -29,7 +30,7 @@ export default function FavoriteButton({ recipeId, size = "sm", className = "", 
     if (!isLoggedIn) {
       showToast({
         message: "Sign in to save your favorite recipes",
-        action: { label: "Sign in", href: "/auth/sign-in" },
+        action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) },
       });
       return;
     }

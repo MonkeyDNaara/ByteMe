@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import EmptyState from "@/app/components/EmptyState";
+import { withNext } from "@/lib/auth/safeNext";
 import { auth } from "@/lib/auth/server";
 import RecipeImage from "@/app/components/RecipeImage";
 import { getAllRecipes, type Recipe } from "@/lib/recipe";
@@ -27,8 +28,8 @@ export default async function ShoppingListPage() {
           emoji="🛒"
           title="Sign in to unlock this"
           text="Favorites and your shopping list live in your account — saved on every device."
-          primary={{ label: "Sign in", href: "/auth/sign-in" }}
-          secondary={{ label: "Create account", href: "/auth/sign-up" }}
+          primary={{ label: "Sign in", href: withNext("/auth/sign-in", "/shopping-list") }}
+          secondary={{ label: "Create account", href: withNext("/auth/sign-up", "/shopping-list") }}
         />
       </div>
     );

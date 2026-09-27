@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { useToast } from "@/app/components/toast/ToastProvider";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
 import type { IngredientDetail } from "@/lib/recipe";
 import { saveMyRecipeToShoppingList, type CheckedItemKey } from "@/lib/shoppingList";
 import { useShoppingList } from "@/lib/useShoppingList";
@@ -69,7 +70,7 @@ export default function IngredientChecklist({ recipeId, ingredients, initialHave
     if (!isLoggedIn) {
       showToast({
         message: "Sign in to use your shopping list",
-        action: { label: "Sign in", href: "/auth/sign-in" },
+        action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) },
       });
       return;
     }

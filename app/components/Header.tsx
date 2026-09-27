@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/lib/auth/actions";
+import { withNext } from "@/lib/auth/safeNext";
 import { useShoppingList } from "@/lib/useShoppingList";
 
 type HeaderProps = {
@@ -187,7 +188,7 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
                 </form>
               </>
             ) : (
-              <Link href="/auth/sign-in" className="btn btn-ghost btn-sm rounded-full">
+              <Link href={withNext("/auth/sign-in", pathname)} className="btn btn-ghost btn-sm rounded-full">
                 Sign in
               </Link>
             )}
@@ -302,10 +303,10 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                <Link href="/auth/sign-in" onClick={closeMenu} className="btn btn-outline h-11 rounded-full">
+                <Link href={withNext("/auth/sign-in", pathname)} onClick={closeMenu} className="btn btn-outline h-11 rounded-full">
                   Sign in
                 </Link>
-                <Link href="/auth/sign-up" onClick={closeMenu} className="btn btn-ghost h-11 rounded-full">
+                <Link href={withNext("/auth/sign-up", pathname)} onClick={closeMenu} className="btn btn-ghost h-11 rounded-full">
                   Create account
                 </Link>
               </div>

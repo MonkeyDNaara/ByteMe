@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import AuthLink from "@/app/components/AuthLink";
+
 type FooterProps = {
   user: { name: string } | null;
   canCreateRecipes: boolean;
@@ -79,14 +81,16 @@ export default function Footer({ user, canCreateRecipes }: FooterProps) {
               ) : (
                 <>
                   <li>
-                    <Link href="/auth/sign-in" className={linkClass}>
+                    {/* Client component: the footer is rendered on the server and
+                        doesn't know the current page, AuthLink does (usePathname). */}
+                    <AuthLink page="/auth/sign-in" className={linkClass}>
                       Sign in
-                    </Link>
+                    </AuthLink>
                   </li>
                   <li>
-                    <Link href="/auth/sign-up" className={linkClass}>
+                    <AuthLink page="/auth/sign-up" className={linkClass}>
                       Create account
-                    </Link>
+                    </AuthLink>
                   </li>
                 </>
               )}
