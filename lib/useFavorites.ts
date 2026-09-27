@@ -125,5 +125,11 @@ export function useFavorites() {
     [favorites],
   );
 
-  return { favorites, isFavorite, toggleFavorite, isLoggedIn: userId != null };
+  // True once `favorites` really belongs to the signed-in user. Before that
+  // it's an empty placeholder, so pages can show server-loaded ids instead
+  // of flashing "no favorites". (Read after useSyncExternalStore, which
+  // re-renders right after loadFavorites updates both values.)
+  const isLoaded = userId !== null && cachedForUserId === userId;
+
+  return { favorites, isFavorite, toggleFavorite, isLoggedIn: userId != null, isLoaded };
 }

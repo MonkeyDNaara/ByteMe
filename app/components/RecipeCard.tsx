@@ -34,9 +34,11 @@ type RecipeCardProps = {
   meal?: MealType;
   /** When set, opening the modal also pushes this path into the URL. */
   href?: string;
+  /** Lowercase labels to show first and highlight, e.g. the active filters. */
+  highlightTags?: string[];
 };
 
-export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
+export default function RecipeCard({ meal, recipe, href, highlightTags = [] }: RecipeCardProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = authClient.useSession();
@@ -81,8 +83,14 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
     };
   }, [recipe.id]);
 
-  const visibleTags = recipe.categories.slice(0, MAX_VISIBLE_TAGS);
-  const hiddenTagCount = recipe.categories.length - visibleTags.length;
+  // Matching (filtered) labels first, so they never hide behind "+N".
+  const isHighlighted = (category: string) => highlightTags.includes(category.toLowerCase());
+  const orderedTags = [
+    ...recipe.categories.filter(isHighlighted),
+    ...recipe.categories.filter((category) => !isHighlighted(category)),
+  ];
+  const visibleTags = orderedTags.slice(0, MAX_VISIBLE_TAGS);
+  const hiddenTagCount = orderedTags.length - visibleTags.length;
   const difficultyLabel = getDifficultyLabel(recipe.difficulty ?? null);
 
   const content = (
@@ -108,14 +116,19 @@ export default function RecipeCard({ meal, recipe, href }: RecipeCardProps) {
             min-h reserves the row even for recipes without tags. */}
         <div className="flex min-h-6 flex-wrap gap-1.5">
           {visibleTags.map((category, index) => (
-            <span key={`${category}-${index}`} className="badge badge-outline badge-sm border-base-300">
+            <span
+              key={`${category}-${index}`}
+              className={`badge badge-sm ${
+                isHighlighted(category) ? "border-primary bg-primary/25 font-medium" : "badge-outline border-base-300"
+              }`}
+            >
               {formatLabel(category)}
             </span>
           ))}
           {hiddenTagCount > 0 && (
             <span
               className="badge badge-sm border-dashed border-base-content/30 bg-transparent text-base-content/60"
-              title={recipe.categories.slice(MAX_VISIBLE_TAGS).map(formatLabel).join(", ")}
+              title={orderedTags.slice(MAX_VISIBLE_TAGS).map(formatLabel).join(", ")}
             >
               +{hiddenTagCount}
             </span>
