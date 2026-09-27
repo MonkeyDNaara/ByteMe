@@ -71,18 +71,24 @@ export function useShoppingList() {
     }
   }, [userId]);
 
-  const toggleOnList = useCallback(
-    (id: string) => {
-      if (!userId) return;
+  /** Sets an exact state (no-op if already there) -- safe for a delayed "Undo", see useFavorites. */
+  const setOnListState = useCallback(
+    (id: string, next: boolean): boolean => {
+      if (!userId || cachedRecipeIds.includes(id) === next) return false;
 
-      const next = !cachedRecipeIds.includes(id);
       cachedRecipeIds = next
         ? [...cachedRecipeIds, id]
         : cachedRecipeIds.filter((item) => item !== id);
       notify();
       void setOnShoppingList(id, next);
+      return true;
     },
     [userId],
+  );
+
+  const toggleOnList = useCallback(
+    (id: string) => setOnListState(id, !cachedRecipeIds.includes(id)),
+    [setOnListState],
   );
 
   const isOnList = useCallback(
@@ -90,5 +96,5 @@ export function useShoppingList() {
     [recipeIds],
   );
 
-  return { recipeIds, isOnList, toggleOnList, isLoggedIn: userId != null };
+  return { recipeIds, isOnList, toggleOnList, setOnListState, isLoggedIn: userId != null };
 }

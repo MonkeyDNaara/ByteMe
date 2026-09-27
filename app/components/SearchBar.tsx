@@ -79,15 +79,18 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
       }}
-      // Home: full width. Elsewhere: sits on the right (ml-auto) and only
-      // takes the whole row while open on smaller screens.
-      className={`relative ${defaultOpen ? "w-full" : `ml-auto ${isExpanded ? "w-full lg:w-auto" : "w-auto"}`}`}
+      // The wrapper ALWAYS reserves the full open size (560px from lg, full
+      // width below). Only the form inside animates. So hovering never
+      // changes the page layout -- otherwise the growing bar could wrap to
+      // the next line, leave the mouse, shrink, jump back under the mouse
+      // and start over (a feedback loop that makes it flicker).
+      className={`relative ${defaultOpen ? "w-full" : "flex w-full justify-end lg:w-[560px] lg:shrink-0"}`}
     >
       <form
         role="search"
         onSubmit={handleSubmit}
-        className={`flex h-12 max-w-full items-center gap-1 rounded-full border bg-base-200 pl-4 pr-1 transition-all duration-800 ease-in-out ${
-          defaultOpen ? "w-full" : isExpanded ? "w-full lg:w-[560px]" : "w-[148px]"
+        className={`flex h-12 max-w-full items-center overflow-hidden rounded-full border bg-base-200 pl-4 pr-1 transition-all duration-800 ease-in-out ${
+          defaultOpen || isExpanded ? "w-full gap-1" : "w-[148px] gap-0"
         } ${
           isActive ? "border-primary shadow-[0_0_0_4px] shadow-primary/25" : "border-base-300 shadow-sm"
         }`}
@@ -116,8 +119,8 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
           onChange={(event) => setSearch(event.target.value)}
           placeholder={placeholder}
           autoComplete="off"
-          className={`min-w-0 flex-1 bg-transparent text-[15px] outline-none transition-opacity duration-500 placeholder:text-base-content/50 [&::-webkit-search-cancel-button]:hidden ${
-            isExpanded ? "opacity-100" : "opacity-0"
+          className={`min-w-0 bg-transparent text-[15px] outline-none transition-opacity duration-500 placeholder:text-base-content/50 [&::-webkit-search-cancel-button]:hidden ${
+            isExpanded ? "flex-1 opacity-100" : "w-0 flex-none opacity-0"
           }`}
         />
 
@@ -130,8 +133,11 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
           }}
           aria-label="Clear search"
           tabIndex={search ? 0 : -1}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base-content/60 transition-opacity hover:bg-base-300 ${
-            search && isExpanded ? "opacity-100 delay-300" : "pointer-events-none opacity-0 delay-0"
+          // Invisible buttons still take up space -- w-0 removes it from the
+          // row, so the closed bar only holds the icon + "Search" (bug: the
+          // Search button used to stick out of the 148px bar).
+          className={`flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-base-content/60 transition-opacity hover:bg-base-300 ${
+            search && isExpanded ? "w-9 opacity-100 delay-300" : "pointer-events-none w-0 opacity-0 delay-0"
           }`}
         >
           ✕
@@ -139,7 +145,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
 
         <button
           type="submit"
-          className={`h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition-colors duration-300 ${
+          className={`ml-auto h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition-colors duration-300 ${
             isActive ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"
           }`}
         >
@@ -150,7 +156,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
       {/* Suggestions dropdown */}
       {query && isActive && (
         <div
-          className={`absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-lg`}
+          className={`absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-lg`}
         >
           {suggestions.length > 0 ? (
             <>

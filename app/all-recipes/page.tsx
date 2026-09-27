@@ -23,8 +23,8 @@ export default async function AllRecipesPage({ searchParams }: { searchParams: P
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
-        <div className="flex min-w-0 flex-col gap-1.5">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">All recipes 📖</h1>
           <p className="text-sm text-base-content/70 sm:text-base">
             {search ? (

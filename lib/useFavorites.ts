@@ -105,19 +105,30 @@ export function useFavorites() {
     }
   }, [userId]);
 
-  const toggleFavorite = useCallback(
-    (id: string) => {
-      if (!userId) return;
+  /**
+   * Sets a favorite to an exact state (no-op if it's already there). Reads the
+   * live module cache, so it's safe for a delayed "Undo" even if the user
+   * clicked again in the meantime -- a plain toggle could flip it the wrong way.
+   * Returns whether anything changed.
+   */
+  const setFavoriteState = useCallback(
+    (id: string, next: boolean): boolean => {
+      if (!userId || cachedFavorites.includes(id) === next) return false;
 
-      const next = !cachedFavorites.includes(id);
       cachedFavorites = next
         ? [...cachedFavorites, id]
         : cachedFavorites.filter((item) => item !== id);
       notify();
       // Best-effort DB sync; the optimistic update above doesn't wait on this.
       void setFavorite(id, next);
+      return true;
     },
     [userId],
+  );
+
+  const toggleFavorite = useCallback(
+    (id: string) => setFavoriteState(id, !cachedFavorites.includes(id)),
+    [setFavoriteState],
   );
 
   const isFavorite = useCallback(
@@ -131,5 +142,5 @@ export function useFavorites() {
   // re-renders right after loadFavorites updates both values.)
   const isLoaded = userId !== null && cachedForUserId === userId;
 
-  return { favorites, isFavorite, toggleFavorite, isLoggedIn: userId != null, isLoaded };
+  return { favorites, isFavorite, toggleFavorite, setFavoriteState, isLoggedIn: userId != null, isLoaded };
 }

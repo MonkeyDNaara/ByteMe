@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 
+import { useToast } from "@/app/components/toast/ToastProvider";
 import { useFavorites } from "@/lib/useFavorites";
 
 type FavoriteButtonProps = {
@@ -14,15 +14,12 @@ type FavoriteButtonProps = {
   onToggle?: (isFavorite: boolean) => void;
 };
 
-export default function FavoriteButton({
-  recipeId,
-  size = "sm",
-  className = "",
-  onToggle,
-}: FavoriteButtonProps) {
-  const router = useRouter();
-  const { isFavorite, toggleFavorite, isLoggedIn } = useFavorites();
+export default function FavoriteButton({ recipeId, size = "sm", className = "", onToggle }: FavoriteButtonProps) {
+  const showToast = useToast();
+  const { isFavorite, toggleFavorite, setFavoriteState, isLoggedIn } = useFavorites();
   const active = isFavorite(recipeId);
+  // Changing this key remounts the icon, which restarts its CSS animation.
+  const [popKey, setPopKey] = useState(0);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The button can sit inside a card that is itself a link.
@@ -30,13 +27,32 @@ export default function FavoriteButton({
     event.stopPropagation();
 
     if (!isLoggedIn) {
-      router.push("/auth/sign-in");
+      showToast({
+        message: "Sign in to save your favorite recipes",
+        action: { label: "Sign in", href: "/auth/sign-in" },
+      });
       return;
     }
 
     const nextActive = !active;
     toggleFavorite(recipeId);
     onToggle?.(nextActive);
+
+    if (nextActive) {
+      setPopKey((key) => key + 1);
+      showToast({ message: "💜 Saved to favorites", action: { label: "View", href: "/favorites" } });
+    } else {
+      showToast({
+        message: "Removed from favorites",
+        action: {
+          label: "Undo",
+          onClick: () => {
+            // Only adjust the like count if the undo really changed something.
+            if (setFavoriteState(recipeId, true)) onToggle?.(true);
+          },
+        },
+      });
+    }
   };
 
   return (
@@ -44,12 +60,14 @@ export default function FavoriteButton({
       type="button"
       onClick={handleClick}
       aria-pressed={active}
-      aria-label={active ? "Remove from favourites" : "Save to favourites"}
+      aria-label={active ? "Remove from favorites" : "Save to favorites"}
       className={`btn btn-circle border-none bg-base-100/80 text-error shadow-sm hover:bg-base-100 ${
         size === "md" ? "btn-md text-2xl" : "btn-sm text-lg"
       } ${className}`}
     >
-      {active ? "♥" : "♡"}
+      <span key={popKey} aria-hidden="true" className={`inline-block ${popKey > 0 ? "motion-safe:animate-pop" : ""}`}>
+        {active ? "♥" : "♡"}
+      </span>
     </button>
   );
 }
