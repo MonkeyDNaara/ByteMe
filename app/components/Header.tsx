@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/lib/auth/actions";
+import { useShoppingList } from "@/lib/useShoppingList";
 
 type HeaderProps = {
   user: { name: string } | null;
@@ -36,6 +37,27 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * Count pill next to "Shopping list". `key={count}` remounts the number when
+ * it changes, which replays the pop animation -- so a 🛒 click visibly lands.
+ * The number is decorative; screen readers get the full sentence instead.
+ */
+function CountBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <>
+      <span
+        key={count}
+        aria-hidden="true"
+        className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-content motion-safe:animate-pop"
+      >
+        {count > 9 ? "9+" : count}
+      </span>
+      <span className="sr-only">, {count === 1 ? "1 recipe" : `${count} recipes`}</span>
+    </>
+  );
+}
+
 function ThemeIcon({ isDark }: { isDark: boolean }) {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -59,6 +81,10 @@ function ThemeIcon({ isDark }: { isDark: boolean }) {
 }
 
 export default function Header({ user, canCreateRecipes }: HeaderProps) {
+  // Recipes on the shopping list -- the same live cache the 🛒 buttons use,
+  // so the badge updates instantly and needs no extra query. Empty when signed out.
+  const { recipeIds: shoppingListIds } = useShoppingList();
+  const shoppingListCount = shoppingListIds.length;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
@@ -127,13 +153,14 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-9 items-center rounded-full px-3.5 text-sm transition-colors ${
+                  className={`flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm transition-colors ${
                     active
                       ? "bg-primary/25 font-semibold text-base-content"
                       : "font-medium text-base-content/70 hover:bg-base-300 hover:text-base-content"
                   }`}
                 >
                   {item.label}
+                  {item.href === "/shopping-list" && <CountBadge count={shoppingListCount} />}
                 </Link>
               );
             })}
@@ -186,8 +213,14 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
             <button
               type="button"
               onClick={() => setIsMobileOpen((prev) => !prev)}
-              className="btn btn-ghost btn-square h-11 w-11"
-              aria-label={isMobileOpen ? "Close menu" : "Open menu"}
+              className="btn btn-ghost btn-square relative h-11 w-11"
+              aria-label={
+                isMobileOpen
+                  ? "Close menu"
+                  : shoppingListCount > 0
+                    ? `Open menu (${shoppingListCount} on your shopping list)`
+                    : "Open menu"
+              }
               aria-expanded={isMobileOpen}
               aria-controls="mobile-menu"
             >
@@ -198,6 +231,13 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
+              {/* Phones: a dot (not a number) hints that the list isn't empty. */}
+              {shoppingListCount > 0 && !isMobileOpen && (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-base-100"
+                />
+              )}
             </button>
           </div>
         </div>
@@ -228,7 +268,8 @@ export default function Header({ user, canCreateRecipes }: HeaderProps) {
                   <span aria-hidden="true" className="text-xl">
                     {item.emoji}
                   </span>
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === "/shopping-list" && <CountBadge count={shoppingListCount} />}
                 </Link>
               );
             })}
