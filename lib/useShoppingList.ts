@@ -86,6 +86,19 @@ export function useShoppingList() {
     [userId],
   );
 
+  /**
+   * Marks a recipe as on the list in the local cache only -- for callers that
+   * already saved it on the server themselves (the ingredient checklist).
+   */
+  const markOnList = useCallback(
+    (id: string) => {
+      if (!userId || cachedRecipeIds.includes(id)) return;
+      cachedRecipeIds = [...cachedRecipeIds, id];
+      notify();
+    },
+    [userId],
+  );
+
   const toggleOnList = useCallback(
     (id: string) => setOnListState(id, !cachedRecipeIds.includes(id)),
     [setOnListState],
@@ -96,5 +109,5 @@ export function useShoppingList() {
     [recipeIds],
   );
 
-  return { recipeIds, isOnList, toggleOnList, setOnListState, isLoggedIn: userId != null };
+  return { recipeIds, isOnList, toggleOnList, setOnListState, markOnList, isLoggedIn: userId != null };
 }

@@ -9,6 +9,7 @@ import { formatLabel, getDifficultyLabel, getMealType, type MealType } from "@/l
 
 import CloseModalButton from "./CloseModalButton";
 import DifficultyPots from "./DifficultyPots";
+import IngredientChecklist from "./IngredientChecklist";
 import IngredientList from "./IngredientList";
 import LikesCount from "./LikesCount";
 import type { RecipeDetailsData } from "./loadRecipeDetails";
@@ -58,7 +59,7 @@ const startCookingClass = "btn btn-primary h-12 gap-2 rounded-full px-6 text-bas
 // Full page
 // ---------------------------------------------------------------------------
 
-function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps) {
+function PageVariant({ recipe, isOwner, initiallyFavorite, initialHave }: RecipeDetailsProps) {
   const meal = getMealType(recipe.categories);
   const hasSteps = recipe.steps.length > 0;
   const cookHref = `/recipe/${recipe.id}/cook`;
@@ -182,8 +183,17 @@ function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps)
           stepCount={recipe.steps.length}
           ingredients={
             <aside className="flex flex-col gap-2 rounded-box border border-base-300 bg-base-200 p-5 sm:p-6">
-              <h2 className="text-xl font-bold sm:text-2xl">🥕 Ingredients</h2>
-              <IngredientList ingredients={recipe.ingredientDetails} />
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <h2 className="text-xl font-bold sm:text-2xl">🥕 Ingredients</h2>
+                {recipe.ingredientDetails.length > 0 && (
+                  <span className="text-sm text-base-content/70">tick off what you have</span>
+                )}
+              </div>
+              <IngredientChecklist
+                recipeId={recipe.id}
+                ingredients={recipe.ingredientDetails}
+                initialHave={initialHave}
+              />
             </aside>
           }
           steps={
