@@ -78,6 +78,12 @@ export type MealType = "Breakfast" | "Lunch" | "Dinner";
 
 export const MEALS: MealType[] = ["Breakfast", "Lunch", "Dinner"];
 
+/** The first meal type found in a recipe's categories, e.g. ["dessert", "breakfast"] -> "Breakfast". */
+export function getMealType(categories: string[] = []): MealType | undefined {
+  const lower = categories.map((category) => category.toLowerCase());
+  return MEALS.find((meal) => lower.includes(meal.toLowerCase()));
+}
+
 // `next/image` only optimizes hosts allowlisted in next.config.ts. Real
 // recipes can point at any image host, so anything not on that allowlist is
 // rendered unoptimized instead of crashing the page.

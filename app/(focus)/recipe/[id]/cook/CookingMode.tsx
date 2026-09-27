@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { useCookingTimers } from "@/lib/cookingTimers";
-import { isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
+import RecipeImage from "@/app/components/RecipeImage";
+import type { Recipe } from "@/lib/recipe";
 
 import ActiveTimers from "./ActiveTimers";
 import FinishScreen from "./FinishScreen";
@@ -138,13 +138,12 @@ export default function CookingMode({ recipe }: CookingModeProps) {
           ✕<span className="max-sm:sr-only"> Exit</span>
         </button>
         <span className="relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block">
-          <Image
+          <RecipeImage
             src={recipe.image_url}
             alt=""
-            fill
+            categories={recipe.categories}
             sizes="44px"
-            className="object-cover"
-            unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+            emojiClassName="text-xl"
           />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -183,7 +182,7 @@ export default function CookingMode({ recipe }: CookingModeProps) {
 
               {ingredientChips.length > 0 && (
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">
                     You need for this step
                   </span>
                   <ul className="flex flex-wrap gap-2">
@@ -215,17 +214,17 @@ export default function CookingMode({ recipe }: CookingModeProps) {
 
               {nextStep && (
                 <div className="hidden flex-col gap-1 rounded-box bg-base-300 px-5 py-4 lg:flex">
-                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">Up next</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Up next</span>
                   <span className="font-bold">
                     {stepIndex + 2} · {nextStep.title || `Step ${stepIndex + 2}`}
                     {nextStep.timeMinutes ? (
-                      <span className="font-medium text-base-content/60"> · ⏱ {nextStep.timeMinutes} min</span>
+                      <span className="font-medium text-base-content/70"> · ⏱ {nextStep.timeMinutes} min</span>
                     ) : null}
                   </span>
                 </div>
               )}
 
-              <p className="hidden text-xs text-base-content/50 lg:block">
+              <p className="hidden text-xs text-base-content/70 lg:block">
                 Tip: <kbd className="kbd kbd-xs">←</kbd> <kbd className="kbd kbd-xs">→</kbd> change steps,{" "}
                 <kbd className="kbd kbd-xs">Space</kbd> starts or pauses the timer.
               </p>

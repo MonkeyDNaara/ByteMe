@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import EmptyState from "@/app/components/EmptyState";
 import { auth } from "@/lib/auth/server";
-import { getAllRecipes, isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
+import RecipeImage from "@/app/components/RecipeImage";
+import { getAllRecipes, type Recipe } from "@/lib/recipe";
 import { getMyCustomShoppingListItems, getMyShoppingListItems, getMyShoppingListRecipeIds } from "@/lib/shoppingList";
 
 import RemoveFromShoppingListButton from "./RemoveFromShoppingListButton";
@@ -70,20 +70,19 @@ function RecipesSidebar({ recipes }: { recipes: Recipe[] }) {
         <h2 id="list-recipes-title" className="text-xl font-bold">
           📖 Recipes on your list
         </h2>
-        <span className="text-sm text-base-content/50">{recipes.length}</span>
+        <span className="text-sm text-base-content/70">{recipes.length}</span>
       </div>
 
       <ul className="flex flex-col gap-2.5">
         {recipes.map((recipe) => (
           <li key={recipe.id} className="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-100 p-2.5">
             <span className="relative h-13 w-13 shrink-0 overflow-hidden rounded-xl bg-base-300">
-              <Image
+              <RecipeImage
                 src={recipe.image_url}
                 alt=""
-                fill
+                categories={recipe.categories}
                 sizes="52px"
-                className="object-cover"
-                unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+                emojiClassName="text-2xl"
               />
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -91,7 +90,7 @@ function RecipesSidebar({ recipes }: { recipes: Recipe[] }) {
               <Link href={`/recipe/${recipe.id}`} className="truncate font-semibold hover:text-link hover:underline">
                 {recipe.name}
               </Link>
-              <span className="text-sm text-base-content/60">
+              <span className="text-sm text-base-content/70">
                 ⏱ {recipe.time} min · {recipe.ingredientDetails.length}{" "}
                 {recipe.ingredientDetails.length === 1 ? "ingredient" : "ingredients"}
               </span>

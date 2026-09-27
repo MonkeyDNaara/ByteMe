@@ -1,11 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import FavoriteButton from "@/app/components/FavoriteButton";
 import { mealBadge } from "@/app/components/mealBadge";
+import RecipeImage from "@/app/components/RecipeImage";
 import ShoppingListButton from "@/app/components/ShoppingListButton";
-import { formatLabel, getDifficultyLabel, isOptimizableImageUrl, MEALS, type MealType } from "@/lib/recipe";
+import { formatLabel, getDifficultyLabel, getMealType, type MealType } from "@/lib/recipe";
 
 import CloseModalButton from "./CloseModalButton";
 import DifficultyPots from "./DifficultyPots";
@@ -33,11 +33,6 @@ export default function RecipeDetails(props: RecipeDetailsProps) {
 // Shared pieces
 // ---------------------------------------------------------------------------
 
-function getMeal(categories: string[]): MealType | undefined {
-  const lower = categories.map((category) => category.toLowerCase());
-  return MEALS.find((meal) => lower.includes(meal.toLowerCase()));
-}
-
 function Badges({ categories, meal }: { categories: string[]; meal?: MealType }) {
   const others = categories.filter((category) => category.toLowerCase() !== meal?.toLowerCase());
   return (
@@ -64,7 +59,7 @@ const startCookingClass = "btn btn-primary h-12 gap-2 rounded-full px-6 text-bas
 // ---------------------------------------------------------------------------
 
 function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps) {
-  const meal = getMeal(recipe.categories);
+  const meal = getMealType(recipe.categories);
   const hasSteps = recipe.steps.length > 0;
   const cookHref = `/recipe/${recipe.id}/cook`;
 
@@ -80,7 +75,7 @@ function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps)
     <article className="mx-auto flex max-w-6xl flex-col pb-28 lg:gap-10 lg:px-6 lg:py-8 lg:pb-20">
       {/* Breadcrumb replaces the old back button: a "back" button breaks when
           the page is opened from a shared link (there's nothing to go back to). */}
-      <nav aria-label="Breadcrumb" className="hidden text-sm text-base-content/60 lg:block">
+      <nav aria-label="Breadcrumb" className="hidden text-sm text-base-content/70 lg:block">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
             <Link href="/all-recipes" className="font-semibold text-link hover:underline">
@@ -107,14 +102,13 @@ function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps)
       {/* Hero */}
       <section className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-12">
         <div className="relative h-[280px] overflow-hidden sm:h-[380px] lg:h-[460px] lg:rounded-[2rem]">
-          <Image
+          <RecipeImage
             src={recipe.image_url}
             alt={recipe.name}
-            fill
+            categories={recipe.categories}
             priority
             sizes="(min-width: 1024px) 600px, 100vw"
-            className="object-cover"
-            unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+            emojiClassName="text-8xl"
           />
           {/* Phone: back + favorite float on the photo */}
           <div className="absolute inset-x-4 top-4 flex justify-between lg:hidden">
@@ -199,7 +193,7 @@ function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps)
                 <section className="flex flex-col">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="text-xl font-bold sm:text-2xl">👣 Steps</h2>
-                    <span className="text-sm text-base-content/60">{stepSummary(recipe.steps)}</span>
+                    <span className="text-sm text-base-content/70">{stepSummary(recipe.steps)}</span>
                   </div>
                   <StepList steps={recipe.steps} />
                 </section>
@@ -247,7 +241,7 @@ function PageVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps)
 // ---------------------------------------------------------------------------
 
 function ModalVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps) {
-  const meal = getMeal(recipe.categories);
+  const meal = getMealType(recipe.categories);
   const hasSteps = recipe.steps.length > 0;
   const fullPageHref = `/recipe/${recipe.id}`;
 
@@ -268,13 +262,12 @@ function ModalVariant({ recipe, isOwner, initiallyFavorite }: RecipeDetailsProps
       {/* Scrollable content */}
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-6">
         <div className="relative h-[220px] shrink-0 overflow-hidden rounded-box sm:h-[260px]">
-          <Image
+          <RecipeImage
             src={recipe.image_url}
             alt={recipe.name}
-            fill
+            categories={recipe.categories}
             sizes="(min-width: 640px) 720px, 100vw"
-            className="object-cover"
-            unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+            emojiClassName="text-7xl"
           />
         </div>
 
