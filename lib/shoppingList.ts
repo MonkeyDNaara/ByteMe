@@ -5,14 +5,17 @@ import { z } from "zod";
 import {
   addCustomShoppingListItem,
   addToShoppingList,
+  getHaveItems,
   getCheckedShoppingListItems,
   getCustomShoppingListItems,
   getShoppingListIngredients,
   getShoppingListRecipeIds,
   removeCustomShoppingListItem,
   removeFromShoppingList,
+  saveRecipeToShoppingList,
   setCustomShoppingListItemChecked,
   setShoppingListItemChecked,
+  type CheckedItemKey,
   type CustomShoppingListItem,
   type ShoppingListIngredient,
 } from "@/dbQueries";
@@ -23,7 +26,7 @@ import { INGREDIENT_UNITS } from "@/lib/ingredientUnits";
 // "use server" restriction that every runtime export here must be an async
 // function (see INGREDIENT_UNITS's own move out of dbQueries.ts for the same
 // reason).
-export type { CustomShoppingListItem };
+export type { CheckedItemKey, CustomShoppingListItem };
 
 const customItemSchema = z.object({
   name: z.string().trim().min(1),
@@ -59,6 +62,49 @@ export async function setOnShoppingList(
     }
   } catch (error) {
     console.error(`Failed to update shopping list for recipe ${recipeId}:`, error);
+  }
+}
+
+const haveItemsSchema = z
+  .array(z.object({ name: z.string().min(1), unit: z.string() }))
+  .max(200);
+
+/** Ingredients the signed-in user already has for this recipe (ticked on the detail page), or `[]`. */
+export async function getMyHaveItems(recipeId: string): Promise<CheckedItemKey[]> {
+  const { data: session } = await auth.getSession();
+  const numericId = Number(recipeId);
+  if (!session?.user || !Number.isFinite(numericId)) return [];
+
+  try {
+    return await getHaveItems(session.user.id, numericId);
+  } catch (error) {
+    // Don't break the recipe page if this optional data can't load
+    // (e.g. before the 001 migration has been run).
+    console.error(`Failed to load have-items for recipe ${recipeId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * "Add missing to shopping list": puts the recipe on the list and stores
+ * which of its ingredients the user already has. Returns `false` on failure
+ * so the UI can show an error instead of a success toast.
+ */
+export async function saveMyRecipeToShoppingList(
+  recipeId: string,
+  have: CheckedItemKey[],
+): Promise<boolean> {
+  const { data: session } = await auth.getSession();
+  const numericId = Number(recipeId);
+  const parsed = haveItemsSchema.safeParse(have);
+  if (!session?.user || !Number.isFinite(numericId) || !parsed.success) return false;
+
+  try {
+    await saveRecipeToShoppingList(session.user.id, numericId, parsed.data);
+    return true;
+  } catch (error) {
+    console.error(`Failed to save recipe ${recipeId} to the shopping list:`, error);
+    return false;
   }
 }
 

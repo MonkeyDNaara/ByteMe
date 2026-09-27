@@ -308,6 +308,15 @@ export const getShoppingListIngredients = async (
     FROM recipe_ingredients ri
     JOIN shopping_list_recipes slr ON slr.recipe_id = ri.recipe_id
     WHERE slr.user_id = ${userId}
+      -- Anti-join: skip ingredients the user already has for THIS recipe
+      -- (ticked on the recipe detail page, see shopping_list_have_items).
+      AND NOT EXISTS (
+        SELECT 1 FROM shopping_list_have_items h
+        WHERE h.user_id = slr.user_id
+          AND h.recipe_id = ri.recipe_id
+          AND h.name = ri.name
+          AND h.unit = ri.unit
+      )
     GROUP BY ri.name, ri.unit
     ORDER BY ri.name
   `;
@@ -324,6 +333,61 @@ export const getShoppingListIngredients = async (
 };
 
 export type CheckedItemKey = { name: string; unit: string };
+
+// ---------------------------------------------------------------------------
+// Shopping list: ingredients the user already HAS for one recipe on the list
+// (shopping_list_have_items, see db/migrations/001). Rows only exist while
+// the recipe is on the list -- the FK cascades them away on removal.
+// ---------------------------------------------------------------------------
+
+export const getHaveItems = async (
+  userId: string,
+  recipeId: number,
+): Promise<CheckedItemKey[]> => {
+  const rows = await sql`
+    SELECT name, unit FROM shopping_list_have_items
+    WHERE user_id = ${userId} AND recipe_id = ${recipeId}
+  `;
+  return rows as unknown as CheckedItemKey[];
+};
+
+/**
+ * Puts the recipe on the shopping list (if it isn't yet) and REPLACES its
+ * "have" ingredients with `have` -- all in one transaction, so the list is
+ * never left half-updated.
+ */
+export const saveRecipeToShoppingList = async (
+  userId: string,
+  recipeId: number,
+  have: CheckedItemKey[],
+) => {
+  const names = have.map((item) => item.name);
+  const units = have.map((item) => item.unit);
+
+  await sql.transaction([
+    sql`
+      INSERT INTO shopping_list_recipes (user_id, recipe_id)
+      VALUES (${userId}, ${recipeId})
+      ON CONFLICT (user_id, recipe_id) DO NOTHING
+    `,
+    sql`
+      DELETE FROM shopping_list_have_items
+      WHERE user_id = ${userId} AND recipe_id = ${recipeId}
+    `,
+    // unnest() turns the two arrays into rows (name, unit). Joining them with
+    // recipe_ingredients keeps only ingredients this recipe really has, so a
+    // tampered request can't insert arbitrary rows.
+    sql`
+      INSERT INTO shopping_list_have_items (user_id, recipe_id, name, unit)
+      -- ::uuid because a parameter in a SELECT list has no known type
+      -- (Postgres would treat it as text and refuse it for the uuid column).
+      SELECT DISTINCT ${userId}::uuid, ${recipeId}::integer, ri.name, ri.unit
+      FROM unnest(${names}::text[], ${units}::text[]) AS picked(name, unit)
+      JOIN recipe_ingredients ri
+        ON ri.recipe_id = ${recipeId} AND ri.name = picked.name AND ri.unit = picked.unit
+    `,
+  ]);
+};
 
 export const getCheckedShoppingListItems = async (
   userId: string,
