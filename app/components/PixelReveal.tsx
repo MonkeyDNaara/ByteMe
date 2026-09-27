@@ -39,7 +39,9 @@ export default function PixelReveal() {
 
     const accent = styles.getPropertyValue("--color-accent").trim() || "#c6f1d6";
 
-    const cream = "#fffaf0";
+    // Card surface colour: near-white in light mode, a soft purple in dark
+    // mode (a hard-coded cream showed up as bright specks on the dark theme).
+    const cream = styles.getPropertyValue("--color-base-200").trim() || "#ffffff";
 
     let dpr = 1;
     let width = 0;

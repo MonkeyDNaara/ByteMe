@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import DeleteRecipeButton from "@/app/components/DeleteRecipeButton";
 import RecipeCard from "@/app/components/RecipeCard";
 import type { RecipeState } from "@/dbQueries";
+import { scrollBehavior } from "@/lib/motion";
 import { getCategoryGroup, REQUIRED_CATEGORY_GROUP, type IngredientDetail, type Recipe } from "@/lib/recipe";
 
 import DifficultyPicker from "./DifficultyPicker";
@@ -130,7 +131,7 @@ export default function RecipeForm({
     event.preventDefault();
     setShowErrors(true);
     const first = document.getElementById(missing[0].id);
-    first?.scrollIntoView({ behavior: "smooth", block: "start" });
+    first?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     first?.querySelector<HTMLElement>("input, textarea, button")?.focus({ preventScroll: true });
   };
 
@@ -233,7 +234,7 @@ export default function RecipeForm({
                   placeholder="45"
                   className={`${fieldClass} w-full pr-14`}
                 />
-                <span aria-hidden="true" className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-sm text-base-content/60">
+                <span aria-hidden="true" className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-sm text-base-content/70">
                   min
                 </span>
               </div>
@@ -278,7 +279,7 @@ export default function RecipeForm({
         {/* Sidebar: live preview + checklist */}
         <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">Live preview</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Live preview</span>
             <div aria-hidden="true">
               <RecipeCard recipe={previewRecipe} preview />
             </div>

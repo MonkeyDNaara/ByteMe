@@ -15,7 +15,7 @@ type IngredientListProps = {
 /** Rows with a bold amount column + the name, e.g. "400 g | spaghetti". */
 export default function IngredientList({ ingredients, twoColumns = false }: IngredientListProps) {
   if (ingredients.length === 0) {
-    return <p className="text-sm text-base-content/60">No ingredients listed.</p>;
+    return <p className="text-sm text-base-content/70">No ingredients listed.</p>;
   }
 
   return (

@@ -18,7 +18,7 @@ export default function PhotoField({ url, onUrlChange, broken, onBroken, isValid
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
       <div
-        className="relative flex h-[110px] w-[160px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-base-300 bg-base-300 text-center text-xs text-base-content/60"
+        className="relative flex h-[110px] w-[160px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-base-300 bg-base-300 text-center text-xs text-base-content/70"
         aria-live="polite"
       >
         {isValidUrl && !broken ? (

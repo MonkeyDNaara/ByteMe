@@ -23,7 +23,7 @@ export default async function RandomRecipePage() {
       <section className="flex flex-col items-center gap-5">
         <div className="text-center">
           <h3 className="text-2xl font-semibold">Your random recipe</h3>
-          <p className="mt-1 text-sm text-base-content/60">Not feeling it? Let byteMe pick another one.</p>
+          <p className="mt-1 text-sm text-base-content/70">Not feeling it? Let byteMe pick another one.</p>
         </div>
 
         <div className="w-full max-w-md">

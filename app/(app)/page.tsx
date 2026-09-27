@@ -206,7 +206,7 @@ export default async function Home() {
               <Link
                 key={feature.title}
                 href={feature.href}
-                className="group flex flex-col gap-2 rounded-box border border-base-300 bg-base-200 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                className="group flex flex-col gap-2 rounded-box border border-base-300 bg-base-200 p-6 shadow-sm transition-all hover:shadow-lg motion-safe:hover:-translate-y-0.5"
               >
                 <span aria-hidden="true" className="text-3xl">
                   {feature.emoji}

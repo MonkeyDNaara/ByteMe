@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 
+import { scrollBehavior } from "@/lib/motion";
+
 import { fieldClass, textareaClass } from "./fieldStyles";
 
 export type StepFormValue = {
@@ -17,7 +19,7 @@ type StepsEditorProps = {
 };
 
 const iconButton =
-  "flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors hover:bg-base-300 disabled:opacity-30 disabled:hover:bg-transparent";
+  "hit-area relative flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors hover:bg-base-300 disabled:opacity-30 disabled:hover:bg-transparent";
 
 /** Controlled like IngredientsEditor: the steps live in the parent, the draft card here. */
 export default function StepsEditor({ value, onChange }: StepsEditorProps) {
@@ -58,7 +60,7 @@ export default function StepsEditor({ value, onChange }: StepsEditorProps) {
     setIngredients(step.ingredients);
     setMinutes(step.timeMinutes != null ? String(step.timeMinutes) : "");
     setEditingIndex(index);
-    draftRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    draftRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
   };
 
   const remove = (index: number) => {
@@ -100,7 +102,7 @@ export default function StepsEditor({ value, onChange }: StepsEditorProps) {
                 <span className="font-bold">{step.title || `Step ${index + 1}`}</span>
                 <p className="text-sm leading-relaxed text-base-content/75">{step.description}</p>
                 {(step.ingredients || step.timeMinutes) && (
-                  <p className="text-sm text-base-content/60">
+                  <p className="text-sm text-base-content/70">
                     {[step.ingredients && `🥣 ${step.ingredients}`, step.timeMinutes && `⏱ ${step.timeMinutes} min`]
                       .filter(Boolean)
                       .join(" · ")}

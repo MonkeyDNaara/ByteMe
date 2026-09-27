@@ -114,7 +114,7 @@ export default function ShoppingListBoard({
               <span className="font-bold">
                 {done === total ? "🎉 Everything's in the cart!" : `${done} of ${total} in the cart`}
               </span>
-              <span className="text-base-content/50">{percent} %</span>
+              <span className="text-base-content/70">{percent} %</span>
             </div>
             <div
               role="progressbar"
@@ -143,7 +143,7 @@ export default function ShoppingListBoard({
                 <h2 id="ingredients-title" className="text-xl font-bold">
                   🥕 Ingredients to buy
                 </h2>
-                <span className="text-sm text-base-content/50">{openItems.length} left</span>
+                <span className="text-sm text-base-content/70">{openItems.length} left</span>
               </div>
 
               {openItems.length > 0 ? (
@@ -160,7 +160,7 @@ export default function ShoppingListBoard({
                   ))}
                 </ul>
               ) : (
-                <p className="px-2 py-3 text-base-content/60">All recipe ingredients are in the cart. 🎉</p>
+                <p className="px-2 py-3 text-base-content/70">All recipe ingredients are in the cart. 🎉</p>
               )}
 
               {doneItems.length > 0 && (
@@ -265,7 +265,7 @@ export default function ShoppingListBoard({
                 ))}
               </ul>
             ) : (
-              <p className="px-2 pt-3 text-sm text-base-content/60">Nothing added yet.</p>
+              <p className="px-2 pt-3 text-sm text-base-content/70">Nothing added yet.</p>
             )}
           </section>
         </div>

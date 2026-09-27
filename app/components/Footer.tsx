@@ -19,7 +19,7 @@ const LEETCODE_URL = "https://leetcode.com/problemset/";
 
 const linkClass = "transition-colors hover:text-link";
 const headingClass =
-  "text-xs font-semibold uppercase tracking-wider text-base-content/50";
+  "text-xs font-semibold uppercase tracking-wider text-base-content/70";
 
 export default function Footer({ user, canCreateRecipes }: FooterProps) {
   const currentYear = new Date().getFullYear();
@@ -128,7 +128,7 @@ export default function Footer({ user, canCreateRecipes }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-base-300 pt-6 text-xs text-base-content/50 sm:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-base-300 pt-6 text-xs text-base-content/70 sm:flex-row">
           <span>© {currentYear} byteMe</span>
           <span>Made by Kevin, Eric &amp; Niko 💜</span>
         </div>
