@@ -94,7 +94,7 @@ export default function AuthForm({ mode, notice }: AuthFormProps) {
           showStrength={isSignUp}
           labelAside={
             !isSignUp && (
-              <Link href="/auth/forgot-password" className="text-[13px] font-semibold text-link hover:underline">
+              <Link href="/auth/forgot-password" className="hit-area relative text-[13px] font-semibold text-link hover:underline">
                 Forgot password?
               </Link>
             )

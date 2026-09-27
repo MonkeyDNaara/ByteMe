@@ -104,7 +104,7 @@ export default function IngredientsEditor({ value, onChange }: IngredientsEditor
                 type="button"
                 onClick={() => onChange(value.filter((_, i) => i !== index))}
                 aria-label={`Remove ${ingredient.name}`}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm text-base-content/60 hover:bg-error/15 hover:text-error"
+                className="hit-area relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm text-base-content/70 hover:bg-error/15 hover:text-error"
               >
                 ✕
               </button>
@@ -112,7 +112,7 @@ export default function IngredientsEditor({ value, onChange }: IngredientsEditor
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-base-content/60">No ingredients yet — tip: press Enter to add quickly.</p>
+        <p className="text-sm text-base-content/70">No ingredients yet — tip: press Enter to add quickly.</p>
       )}
 
       {/* The server action reads repeated "ingredients" fields with JSON (unchanged format). */}

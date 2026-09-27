@@ -45,6 +45,23 @@
   }
 }
 
+/* `hit-area`: grows the CLICKABLE area of a small control to at least 44x44px
+   (Apple HIG / WCAG 2.5.5) without changing how it looks -- an invisible
+   ::after centered on the element. The element must be positioned
+   (`relative`, or already `absolute`). Keep ~44px between neighbours so the
+   invisible areas don't overlap. */
+@utility hit-area {
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 @plugin "daisyui/theme" {
   name: "bytemepastel";
   default: true;

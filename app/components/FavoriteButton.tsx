@@ -55,14 +55,17 @@ export default function FavoriteButton({ recipeId, size = "sm", className = "", 
     }
   };
 
+  // Size via daisyUI's `--size` variable (btn-circle uses it for width AND
+  // height), so a caller's `className="h-14 w-14"` can still override it.
+  // md = 44px; sm = 40px visible + `hit-area` for a 44px touch target.
   return (
     <button
       type="button"
       onClick={handleClick}
       aria-pressed={active}
       aria-label={active ? "Remove from favorites" : "Save to favorites"}
-      className={`btn btn-circle border-none bg-base-100/80 text-error shadow-sm hover:bg-base-100 ${
-        size === "md" ? "btn-md text-2xl" : "btn-sm text-lg"
+      className={`btn btn-circle relative border-none bg-base-100/90 ring-1 ring-base-content/10 text-error shadow-md hover:bg-base-100 ${
+        size === "md" ? "text-2xl [--size:2.75rem]" : "hit-area text-lg [--size:2.5rem]"
       } ${className}`}
     >
       <span key={popKey} aria-hidden="true" className={`inline-block ${popKey > 0 ? "motion-safe:animate-pop" : ""}`}>

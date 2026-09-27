@@ -326,7 +326,7 @@ export default function RecipeFilters({ recipes, initialFilters }: RecipeFilters
               Filters
             </h2>
             <form method="dialog">
-              <button type="submit" className="btn btn-circle btn-ghost btn-sm" aria-label="Close filters">
+              <button type="submit" className="btn btn-circle btn-ghost h-11 min-h-11 w-11" aria-label="Close filters">
                 ✕
               </button>
             </form>

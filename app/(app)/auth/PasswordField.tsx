@@ -68,7 +68,7 @@ export default function PasswordField({ label, autoComplete, showStrength = fals
           aria-pressed={visible}
           aria-controls={id}
           aria-label={visible ? "Hide password" : "Show password"}
-          className="absolute right-2 top-1/2 h-9 -translate-y-1/2 rounded-xl bg-base-300 px-3 text-[13px] font-semibold transition-colors hover:bg-base-content/15"
+          className="hit-area absolute right-2 top-1/2 h-9 -translate-y-1/2 rounded-xl bg-base-300 px-3 text-[13px] font-semibold transition-colors hover:bg-base-content/15"
         >
           {visible ? "Hide" : "Show"}
         </button>
@@ -84,7 +84,7 @@ export default function PasswordField({ label, autoComplete, showStrength = fals
               />
             ))}
           </div>
-          <span className={`text-[13px] ${longEnough ? "font-medium text-success" : "text-base-content/60"}`}>
+          <span className={`text-[13px] ${longEnough ? "font-medium text-success" : "text-base-content/70"}`}>
             {longEnough ? "✓" : "○"} At least {MIN_LENGTH} characters
             {value && <span className="sr-only">. Strength: {STRENGTH_LABELS[strength]}</span>}
           </span>
