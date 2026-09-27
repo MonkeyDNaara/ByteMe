@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import PixelReveal from "@/app/components/PixelReveal";
 import RecipeCard from "@/app/components/RecipeCard";
 import { getRecipesOfTheDay } from "@/lib/recipe";
 
@@ -9,7 +10,10 @@ export default async function Home() {
   const recipesOfTheDay = await getRecipesOfTheDay();
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-10 sm:px-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-10 sm:px-6">
+      {/* Home only: pixel intro animation. Uses this div as its reference container. */}
+      <PixelReveal />
+
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           byteMe
