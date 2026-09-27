@@ -24,13 +24,12 @@ export default async function EditRecipePage({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Edit recipe
-        </h1>
-        <p className="text-sm text-base-content/70">
-          Update the details below and save your changes.
+    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-10 sm:px-6">
+      <header className="flex flex-col gap-1.5">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Edit recipe ✏️</h1>
+        <p className="text-base-content/70">
+          Update the details below and save your changes — fields with <span className="text-error">*</span> are
+          required.
         </p>
       </header>
 
