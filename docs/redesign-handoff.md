@@ -427,6 +427,7 @@ Each of these should become its own issue later.
 4. **Signed-out ♡ / 🛒 go to sign-in** with a return URL back to the recipe, instead of doing nothing.
 5. **Drag & drop to reorder cooking steps** in the recipe form, replacing ↑/↓ (e.g. `dnd-kit` or native HTML5 DnD).
 6. **Clean up recipes with broken images** (data task; do it at the end).
+7. **Style the 404 page** (`app/(app)/not-found.tsx`). Today it's two plain lines of text in an empty page. Use the `EmptyState` look: 🍜 + "Page not found" + the existing fun text + buttons "Back home" / "Browse recipes" (and maybe "🎲 Surprise me").
 
 ---
 
