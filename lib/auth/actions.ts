@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { getSafeNext } from "@/lib/auth/safeNext";
 import { auth } from "@/lib/auth/server";
 
 // email/name are echoed back so the form can refill them after a failed
@@ -57,7 +58,9 @@ export async function signIn(
   const { error } = await auth.signIn.email(parsed.data);
   if (error) return { error: error.message ?? "Could not sign in", email };
 
-  redirect("/");
+  // Back to where the user came from. Validated HERE, on the server: the
+  // hidden form field is just as untrusted as the URL it came from.
+  redirect(getSafeNext(formData.get("next")));
 }
 
 export async function signUp(
@@ -84,7 +87,7 @@ export async function signUp(
     return { error: error.message ?? "Could not create account", name, email };
   }
 
-  redirect("/");
+  redirect(getSafeNext(formData.get("next")));
 }
 
 export async function signOut(): Promise<void> {

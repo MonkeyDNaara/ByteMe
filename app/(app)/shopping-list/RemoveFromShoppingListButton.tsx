@@ -36,7 +36,7 @@ export default function RemoveFromShoppingListButton({ recipeId, recipeName }: R
       onClick={handleClick}
       disabled={isPending}
       aria-label={`Remove ${recipeName} from the shopping list`}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-sm text-base-content/60 transition-colors hover:bg-error/15 hover:text-error disabled:opacity-50"
+      className="hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-200 text-sm text-base-content/70 transition-colors hover:bg-error/15 hover:text-error disabled:opacity-50"
     >
       {isPending ? <span className="loading loading-spinner loading-xs" /> : "✕"}
     </button>

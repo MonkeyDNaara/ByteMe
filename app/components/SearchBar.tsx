@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
+import RecipeImage from "@/app/components/RecipeImage";
+import type { Recipe } from "@/lib/recipe";
 
 /** Only what the suggestions need -- keeps the data sent to the browser small. */
 export type SearchSuggestion = Pick<Recipe, "id" | "name" | "likes" | "image_url">;
@@ -96,7 +96,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
         }`}
       >
         <svg
-          className="h-4 w-4 shrink-0 text-base-content/50"
+          className="h-4 w-4 shrink-0 text-base-content/70"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -119,7 +119,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
           onChange={(event) => setSearch(event.target.value)}
           placeholder={placeholder}
           autoComplete="off"
-          className={`min-w-0 bg-transparent text-[15px] outline-none transition-opacity duration-500 placeholder:text-base-content/50 [&::-webkit-search-cancel-button]:hidden ${
+          className={`min-w-0 bg-transparent text-[15px] outline-none transition-opacity duration-500 placeholder:text-base-content/70 [&::-webkit-search-cancel-button]:hidden ${
             isExpanded ? "flex-1 opacity-100" : "w-0 flex-none opacity-0"
           }`}
         />
@@ -136,7 +136,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
           // Invisible buttons still take up space -- w-0 removes it from the
           // row, so the closed bar only holds the icon + "Search" (bug: the
           // Search button used to stick out of the 148px bar).
-          className={`flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-base-content/60 transition-opacity hover:bg-base-300 ${
+          className={`flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-base-content/70 transition-opacity hover:bg-base-300 ${
             search && isExpanded ? "w-9 opacity-100 delay-300" : "pointer-events-none w-0 opacity-0 delay-0"
           }`}
         >
@@ -160,7 +160,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
         >
           {suggestions.length > 0 ? (
             <>
-              <p className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+              <p className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-base-content/70">
                 Top matches
               </p>
               <ul>
@@ -171,19 +171,12 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
                       className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-base-300 focus-visible:bg-base-300"
                     >
                       <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-base-300">
-                        <Image
-                          src={recipe.image_url}
-                          alt=""
-                          fill
-                          sizes="36px"
-                          className="object-cover"
-                          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
-                        />
+                        <RecipeImage src={recipe.image_url} alt="" sizes="36px" emojiClassName="text-lg" />
                       </span>
                       <span className="flex-1 truncate font-normal">
                         <HighlightMatch name={recipe.name} query={query} />
                       </span>
-                      <span className="shrink-0 text-sm text-base-content/60">
+                      <span className="shrink-0 text-sm text-base-content/70">
                         ❤️ {recipe.likes}
                         <span className="sr-only"> likes</span>
                       </span>
@@ -193,7 +186,7 @@ export default function SearchBar({ recipes, defaultOpen = false, placeholder = 
               </ul>
             </>
           ) : (
-            <p className="px-4 py-3 text-sm text-base-content/60">No recipe name matches “{query}” yet.</p>
+            <p className="px-4 py-3 text-sm text-base-content/70">No recipe name matches “{query}” yet.</p>
           )}
 
           <Link

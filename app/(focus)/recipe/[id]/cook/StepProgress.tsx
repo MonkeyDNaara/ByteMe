@@ -30,7 +30,7 @@ export default function StepProgress({ steps, current, finished, onSelect }: Ste
                 />
                 <span
                   className={`hidden truncate text-[13px] sm:block ${
-                    active ? "font-bold text-base-content" : "text-base-content/60 group-hover:text-base-content"
+                    active ? "font-bold text-base-content" : "text-base-content/70 group-hover:text-base-content"
                   }`}
                 >
                   {done && "✓ "}

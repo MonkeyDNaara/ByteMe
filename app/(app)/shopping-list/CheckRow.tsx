@@ -28,7 +28,7 @@ export default function CheckRow({ name, amount, unit, checked, onToggle, onRemo
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${name}`}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-100 text-sm text-base-content/60 transition-colors hover:bg-error/15 hover:text-error"
+          className="hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-100 text-sm text-base-content/70 transition-colors hover:bg-error/15 hover:text-error"
         >
           ✕
         </button>

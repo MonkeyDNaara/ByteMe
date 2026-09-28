@@ -9,7 +9,7 @@ type DifficultyPanelProps = {
 
 export default function DifficultyPanel({ levels, selected, onToggle }: DifficultyPanelProps) {
   if (levels.length === 0) {
-    return <p className="px-2 py-1 text-sm text-base-content/60">No rated recipes yet.</p>;
+    return <p className="px-2 py-1 text-sm text-base-content/70">No rated recipes yet.</p>;
   }
 
   return (

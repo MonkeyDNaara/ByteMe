@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { useCookingTimers } from "@/lib/cookingTimers";
-import { isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
+import RecipeImage from "@/app/components/RecipeImage";
+import type { Recipe } from "@/lib/recipe";
+import { useWakeLock } from "@/lib/useWakeLock";
 
 import ActiveTimers from "./ActiveTimers";
 import FinishScreen from "./FinishScreen";
@@ -54,6 +55,13 @@ export default function CookingMode({ recipe }: CookingModeProps) {
   const isLast = stepIndex === steps.length - 1;
   const timer = getTimer(stepIndex);
   const activeTimerCount = timers.filter((t) => t.status === "running" || t.status === "paused").length;
+
+  // --- Keep the screen on ----------------------------------------------------
+  // The user can switch it off (battery). On the finish screen it only stays
+  // on while the timer dock is still visible (e.g. a cake still in the oven).
+  const [keepAwake, setKeepAwake] = useState(true);
+  const needsScreen = !finished || timers.length > 0;
+  const { isSupported: wakeLockSupported } = useWakeLock(keepAwake && needsScreen);
 
   const goTo = (index: number) => {
     setFinished(false);
@@ -138,19 +146,35 @@ export default function CookingMode({ recipe }: CookingModeProps) {
           ✕<span className="max-sm:sr-only"> Exit</span>
         </button>
         <span className="relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-xl sm:block">
-          <Image
+          <RecipeImage
             src={recipe.image_url}
             alt=""
-            fill
+            categories={recipe.categories}
             sizes="44px"
-            className="object-cover"
-            unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+            emojiClassName="text-xl"
           />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="hidden text-xs font-bold uppercase tracking-wider text-link sm:block">👩‍🍳 Cooking mode</span>
           <span className="truncate font-bold sm:text-[17px]">{recipe.name}</span>
         </div>
+        {/* A real checkbox (daisyUI toggle): the on/off state is visible AND
+            announced by screen readers, and the whole pill is the 44px target. */}
+        {wakeLockSupported && needsScreen && (
+          <label
+            title="Keeps your phone or tablet from going dark while you cook"
+            className="flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-base-300 px-3 text-sm font-semibold"
+          >
+            <span aria-hidden="true">{keepAwake ? "🔆" : "🌙"}</span>
+            <span className="max-md:sr-only">Keep screen on</span>
+            <input
+              type="checkbox"
+              checked={keepAwake}
+              onChange={(event) => setKeepAwake(event.target.checked)}
+              className="toggle toggle-sm toggle-success"
+            />
+          </label>
+        )}
         <span className="text-sm font-bold text-link sm:hidden">
           {finished ? "✓" : `${stepIndex + 1}/${steps.length}`}
         </span>
@@ -183,7 +207,7 @@ export default function CookingMode({ recipe }: CookingModeProps) {
 
               {ingredientChips.length > 0 && (
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">
                     You need for this step
                   </span>
                   <ul className="flex flex-wrap gap-2">
@@ -215,17 +239,17 @@ export default function CookingMode({ recipe }: CookingModeProps) {
 
               {nextStep && (
                 <div className="hidden flex-col gap-1 rounded-box bg-base-300 px-5 py-4 lg:flex">
-                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">Up next</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">Up next</span>
                   <span className="font-bold">
                     {stepIndex + 2} · {nextStep.title || `Step ${stepIndex + 2}`}
                     {nextStep.timeMinutes ? (
-                      <span className="font-medium text-base-content/60"> · ⏱ {nextStep.timeMinutes} min</span>
+                      <span className="font-medium text-base-content/70"> · ⏱ {nextStep.timeMinutes} min</span>
                     ) : null}
                   </span>
                 </div>
               )}
 
-              <p className="hidden text-xs text-base-content/50 lg:block">
+              <p className="hidden text-xs text-base-content/70 lg:block">
                 Tip: <kbd className="kbd kbd-xs">←</kbd> <kbd className="kbd kbd-xs">→</kbd> change steps,{" "}
                 <kbd className="kbd kbd-xs">Space</kbd> starts or pauses the timer.
               </p>

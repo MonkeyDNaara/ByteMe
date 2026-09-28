@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 import FavoriteButton from "@/app/components/FavoriteButton";
 import { mealBadge } from "@/app/components/mealBadge";
+import RecipeImage from "@/app/components/RecipeImage";
 import ShoppingListButton from "@/app/components/ShoppingListButton";
 import {
   DIFFICULTY_EMOJI,
   formatLabel,
   getDifficultyLabel,
-  isOptimizableImageUrl,
   type MealType,
   type Recipe,
 } from "@/lib/recipe";
@@ -25,6 +24,8 @@ type RecipeCardProps = {
   meal?: MealType;
   /** Lowercase labels to show first and highlight, e.g. the active filters. */
   highlightTags?: string[];
+  /** Live preview in the recipe form: no link, no ♡/🛒, placeholder without a photo. */
+  preview?: boolean;
 };
 
 /**
@@ -32,7 +33,7 @@ type RecipeCardProps = {
  * navigation and shows the recipe as a modal over the current page (see
  * app/@modal/(.)recipe/[id]); a reload or shared link shows the full page.
  */
-export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeCardProps) {
+export default function RecipeCard({ meal, recipe, highlightTags = [], preview = false }: RecipeCardProps) {
   // Optimistic local count so the card updates immediately when the
   // favourite button is pressed. The real count comes from the favorites table.
   const [likes, setLikes] = useState(recipe.likes);
@@ -54,14 +55,22 @@ export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeC
   const content = (
     <>
       <figure className="relative h-[196px] shrink-0 overflow-hidden">
-        <Image
-          src={recipe.image_url}
-          alt={recipe.name}
-          fill
-          sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
-        />
+        {/* In the form preview, an empty photo means "not added yet" -> 📷.
+            Everywhere else RecipeImage shows the meal-type fallback. */}
+        {preview && !recipe.image_url ? (
+          <div className="flex h-full items-center justify-center bg-base-300 text-4xl" aria-hidden="true">
+            📷
+          </div>
+        ) : (
+          <RecipeImage
+            src={recipe.image_url}
+            alt={recipe.name}
+            categories={recipe.categories}
+            sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
+            className="object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.03]"
+            emojiClassName="text-6xl"
+          />
+        )}
 
         {meal && <span className={`badge ${mealBadge[meal]} absolute left-3 top-3 font-medium`}>{meal}</span>}
       </figure>
@@ -71,12 +80,16 @@ export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeC
             entire card is clickable while the link text stays the title
             (good for screen readers, and no <button> nested in an <a>). */}
         <h3 className="line-clamp-1 text-lg font-semibold">
-          <Link
-            href={`/recipe/${recipe.id}`}
-            className="after:absolute after:inset-0 after:z-0 after:content-[''] focus-visible:outline-none"
-          >
-            {recipe.name}
-          </Link>
+          {preview ? (
+            recipe.name
+          ) : (
+            <Link
+              href={`/recipe/${recipe.id}`}
+              className="after:absolute after:inset-0 after:z-0 after:content-[''] focus-visible:outline-none"
+            >
+              {recipe.name}
+            </Link>
+          )}
         </h3>
         <p className="line-clamp-2 min-h-10 text-sm text-base-content/70">{recipe.snippet}</p>
 
@@ -95,7 +108,7 @@ export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeC
           ))}
           {hiddenTagCount > 0 && (
             <span
-              className="badge badge-sm border-dashed border-base-content/30 bg-transparent text-base-content/60"
+              className="badge badge-sm border-dashed border-base-content/30 bg-transparent text-base-content/70"
               title={orderedTags.slice(MAX_VISIBLE_TAGS).map(formatLabel).join(", ")}
             >
               +{hiddenTagCount}
@@ -122,7 +135,7 @@ export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeC
                 <span className="sr-only">Difficulty {recipe.difficulty} of 5</span>
               </>
             ) : (
-              <span className="text-base-content/50">No difficulty yet</span>
+              <span className="text-base-content/70">No difficulty yet</span>
             )}
           </div>
 
@@ -140,12 +153,14 @@ export default function RecipeCard({ meal, recipe, highlightTags = [] }: RecipeC
   );
 
   return (
-    <article className="group card relative overflow-hidden border border-base-300 bg-base-200 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-primary">
+    <article className="group card relative overflow-hidden border border-base-300 bg-base-200 shadow-sm transition-all duration-300 hover:shadow-lg motion-safe:hover:-translate-y-0.5 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-primary">
       {/* z-10 puts the buttons above the stretched link, so they stay clickable. */}
-      <div className="absolute right-3 top-3 z-10 flex gap-2">
-        <ShoppingListButton recipeId={String(recipe.id)} />
-        <FavoriteButton recipeId={String(recipe.id)} onToggle={handleFavoriteToggle} />
-      </div>
+      {!preview && (
+        <div className="absolute right-3 top-3 z-10 flex gap-2">
+          <ShoppingListButton recipeId={String(recipe.id)} />
+          <FavoriteButton recipeId={String(recipe.id)} onToggle={handleFavoriteToggle} />
+        </div>
+      )}
 
       {content}
     </article>

@@ -14,7 +14,7 @@ type ActiveTimersProps = {
 };
 
 const miniButton =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-300 text-sm transition-colors hover:bg-base-content/15";
+  "hit-area relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-300 text-sm transition-colors hover:bg-base-content/15";
 
 /** Timer dock: one pill per timer. Finished timers turn green with 🔔. */
 export default function ActiveTimers({ timers, steps, now, onJumpToStep, onPause, onResume, onStop }: ActiveTimersProps) {

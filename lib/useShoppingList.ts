@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { authClient } from "@/lib/auth/client";
+import { useSessionUserId } from "@/app/components/SessionProvider";
 import { getMyShoppingListRecipeIds, setOnShoppingList } from "@/lib/shoppingList";
 
 // Same architecture as lib/useFavorites.ts: a module-level cache backing
@@ -48,8 +48,8 @@ async function loadShoppingList(userId: string): Promise<void> {
 }
 
 export function useShoppingList() {
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id ?? null;
+  // Server-provided (see SessionProvider) -- updates right after sign-in/out.
+  const userId = useSessionUserId();
   const recipeIds = useSyncExternalStore(
     subscribe,
     getSnapshot,
@@ -86,6 +86,19 @@ export function useShoppingList() {
     [userId],
   );
 
+  /**
+   * Marks a recipe as on the list in the local cache only -- for callers that
+   * already saved it on the server themselves (the ingredient checklist).
+   */
+  const markOnList = useCallback(
+    (id: string) => {
+      if (!userId || cachedRecipeIds.includes(id)) return;
+      cachedRecipeIds = [...cachedRecipeIds, id];
+      notify();
+    },
+    [userId],
+  );
+
   const toggleOnList = useCallback(
     (id: string) => setOnListState(id, !cachedRecipeIds.includes(id)),
     [setOnListState],
@@ -96,5 +109,5 @@ export function useShoppingList() {
     [recipeIds],
   );
 
-  return { recipeIds, isOnList, toggleOnList, setOnListState, isLoggedIn: userId != null };
+  return { recipeIds, isOnList, toggleOnList, setOnListState, markOnList, isLoggedIn: userId != null };
 }

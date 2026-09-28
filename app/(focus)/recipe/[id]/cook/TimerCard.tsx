@@ -86,7 +86,7 @@ export default function TimerCard({ minutes, timer, now, onStart, onPause, onRes
         <Ring size={56} stroke={7} progress={progress} completed={completed} />
         <div className="flex flex-1 flex-col">
           <span className="font-mono text-3xl font-bold">{digits}</span>
-          <span className="text-sm text-base-content/60">{total}</span>
+          <span className="text-sm text-base-content/70">{total}</span>
         </div>
         {controls}
       </div>
@@ -97,7 +97,7 @@ export default function TimerCard({ minutes, timer, now, onStart, onPause, onRes
           <Ring size={200} stroke={14} progress={progress} completed={completed} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="font-mono text-5xl font-bold">{digits}</span>
-            <span className="text-sm text-base-content/60">{total}</span>
+            <span className="text-sm text-base-content/70">{total}</span>
           </div>
         </div>
         <div className="flex gap-3">{controls}</div>

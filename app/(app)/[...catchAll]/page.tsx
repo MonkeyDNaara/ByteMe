@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+// Tab title for unknown URLs ("Page not found | byteMe" via the root template).
+export const metadata: Metadata = { title: "Page not found" };
 
 // (Same segment name as app/@modal/[...catchAll] -- Next.js needs both
 // catch-alls to be named alike.) Any URL that matches no page lands here and triggers (app)/not-found.tsx,

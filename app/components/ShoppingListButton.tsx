@@ -3,6 +3,7 @@
 import { useState, type MouseEvent } from "react";
 
 import { useToast } from "@/app/components/toast/ToastProvider";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
 import { useShoppingList } from "@/lib/useShoppingList";
 
 type ShoppingListButtonProps = {
@@ -29,7 +30,7 @@ export default function ShoppingListButton({ recipeId, size = "sm", label, class
     if (!isLoggedIn) {
       showToast({
         message: "Sign in to use your shopping list",
-        action: { label: "Sign in", href: "/auth/sign-in" },
+        action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) },
       });
       return;
     }
@@ -84,9 +85,9 @@ export default function ShoppingListButton({ recipeId, size = "sm", label, class
       onClick={handleClick}
       aria-pressed={active}
       aria-label={active ? "Remove from shopping list" : "Add to shopping list"}
-      className={`btn btn-circle border-none bg-base-100/80 shadow-sm hover:bg-base-100 ${
+      className={`btn btn-circle relative border-none bg-base-100/90 ring-1 ring-base-content/10 shadow-md hover:bg-base-100 ${
         active ? "text-primary" : "text-base-content/70"
-      } ${size === "md" ? "btn-md text-2xl" : "btn-sm text-lg"} ${className}`}
+      } ${size === "md" ? "text-2xl [--size:2.75rem]" : "hit-area text-lg [--size:2.5rem]"} ${className}`}
     >
       {icon}
     </button>

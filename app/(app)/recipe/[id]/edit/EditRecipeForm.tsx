@@ -1,8 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import RecipeForm from "@/app/components/RecipeForm";
+import RecipeForm from "@/app/components/recipe-form/RecipeForm";
 import { updateRecipe } from "@/dbQueries";
 import type { Recipe } from "@/lib/recipe";
 
@@ -11,8 +9,6 @@ type EditRecipeFormProps = {
 };
 
 export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
-  const router = useRouter();
-
   return (
     <RecipeForm
       action={updateRecipe.bind(null, Number(recipe.id))}
@@ -29,7 +25,14 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
       }}
       submitLabel="Save changes"
       pendingLabel="Saving…"
-      onSuccess={() => router.push(`/recipe/${recipe.id}`)}
+      draftScope={`edit:${recipe.id}`}
+      deleteRecipeId={Number(recipe.id)}
+      // Hard navigation on purpose: a soft one to /recipe/[id] would be
+      // intercepted and open the recipe as a modal over this form.
+      onSuccess={() => {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- deliberate, see above
+        window.location.assign(`/recipe/${recipe.id}`);
+      }}
     />
   );
 }

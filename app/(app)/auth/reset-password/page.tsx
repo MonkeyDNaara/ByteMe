@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import Link from "next/link";
+
+import { AuthCard } from "../AuthShell";
 import ResetPasswordForm from "./ResetPasswordForm";
 
 export const metadata: Metadata = {
@@ -17,15 +20,18 @@ export default async function ResetPasswordPage({
 
   if (!token) {
     return (
-      <div className="mx-auto flex max-w-md flex-col gap-2 px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Invalid reset link
-        </h1>
-        <p className="text-sm text-base-content/70">
-          This password reset link is missing its token, or has already been
-          used. Request a new one from the sign-in page.
+      <AuthCard emoji="🧐">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">This link doesn&apos;t work</h1>
+        <p className="text-[15px] leading-relaxed text-base-content/70">
+          The password reset link is missing its token or has already been used. No problem — just request a new one.
         </p>
-      </div>
+        <Link href="/auth/forgot-password" className="btn btn-primary h-13 w-full rounded-full text-base font-bold">
+          Request a new link
+        </Link>
+        <Link href="/auth/sign-in" className="text-center text-sm font-semibold text-link hover:underline">
+          ← Back to sign in
+        </Link>
+      </AuthCard>
     );
   }
 

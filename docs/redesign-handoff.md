@@ -428,6 +428,7 @@ Each of these should become its own issue later.
 5. **Drag & drop to reorder cooking steps** in the recipe form, replacing ↑/↓ (e.g. `dnd-kit` or native HTML5 DnD).
 6. **Clean up recipes with broken images** (data task; do it at the end).
 7. **Style the 404 page** (`app/(app)/not-found.tsx`). Today it's two plain lines of text in an empty page. Use the `EmptyState` look: 🍜 + "Page not found" + the existing fun text + buttons "Back home" / "Browse recipes" (and maybe "🎲 Surprise me").
+8. **Auto-save recipe form drafts** (create / edit). Save the form state to `localStorage` while typing (debounced) and offer "Restore your draft?" when the page is opened again; clear it after a successful publish. Long forms are easy to lose (closed tab, accidental back).
 
 ---
 

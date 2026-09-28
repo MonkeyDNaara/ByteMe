@@ -1,10 +1,10 @@
 export default function Loading() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 animate-pulse">
+    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 motion-safe:animate-pulse">
       {/* Header */}
       <header className="flex flex-col gap-2">
         {/* Title */}
-        <div className="h-10 w-48 animate-pulse rounded-box bg-base-300" />
+        <div className="h-10 w-48 motion-safe:animate-pulse rounded-box bg-base-300" />
       </header>
 
       {/* Recipe filters / cards */}
@@ -15,21 +15,21 @@ export default function Loading() {
             className="flex flex-col gap-4 rounded-box bg-base-200 p-4"
           >
             {/* Image */}
-            <div className="h-48 w-full animate-pulse rounded-box bg-base-300" />
+            <div className="h-48 w-full motion-safe:animate-pulse rounded-box bg-base-300" />
 
             {/* Recipe title */}
-            <div className="h-6 w-3/4 animate-pulse rounded bg-base-300" />
+            <div className="h-6 w-3/4 motion-safe:animate-pulse rounded bg-base-300" />
 
             {/* Description */}
             <div className="flex flex-col gap-2">
-              <div className="h-4 w-full animate-pulse rounded bg-base-300" />
-              <div className="h-4 w-5/6 animate-pulse rounded bg-base-300" />
+              <div className="h-4 w-full motion-safe:animate-pulse rounded bg-base-300" />
+              <div className="h-4 w-5/6 motion-safe:animate-pulse rounded bg-base-300" />
             </div>
 
             {/* Bottom info */}
             <div className="flex gap-2">
-              <div className="h-6 w-20 animate-pulse rounded-full bg-base-300" />
-              <div className="h-6 w-16 animate-pulse rounded-full bg-base-300" />
+              <div className="h-6 w-20 motion-safe:animate-pulse rounded-full bg-base-300" />
+              <div className="h-6 w-16 motion-safe:animate-pulse rounded-full bg-base-300" />
             </div>
           </div>
         ))}

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import AuthLink from "@/app/components/AuthLink";
+
 type FooterProps = {
   user: { name: string } | null;
   canCreateRecipes: boolean;
@@ -19,7 +21,7 @@ const LEETCODE_URL = "https://leetcode.com/problemset/";
 
 const linkClass = "transition-colors hover:text-link";
 const headingClass =
-  "text-xs font-semibold uppercase tracking-wider text-base-content/50";
+  "text-xs font-semibold uppercase tracking-wider text-base-content/70";
 
 export default function Footer({ user, canCreateRecipes }: FooterProps) {
   const currentYear = new Date().getFullYear();
@@ -79,14 +81,16 @@ export default function Footer({ user, canCreateRecipes }: FooterProps) {
               ) : (
                 <>
                   <li>
-                    <Link href="/auth/sign-in" className={linkClass}>
+                    {/* Client component: the footer is rendered on the server and
+                        doesn't know the current page, AuthLink does (usePathname). */}
+                    <AuthLink page="/auth/sign-in" className={linkClass}>
                       Sign in
-                    </Link>
+                    </AuthLink>
                   </li>
                   <li>
-                    <Link href="/auth/sign-up" className={linkClass}>
+                    <AuthLink page="/auth/sign-up" className={linkClass}>
                       Create account
-                    </Link>
+                    </AuthLink>
                   </li>
                 </>
               )}
@@ -128,7 +132,7 @@ export default function Footer({ user, canCreateRecipes }: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-base-300 pt-6 text-xs text-base-content/50 sm:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-base-300 pt-6 text-xs text-base-content/70 sm:flex-row">
           <span>© {currentYear} byteMe</span>
           <span>Made by Kevin, Eric &amp; Niko 💜</span>
         </div>

@@ -27,6 +27,13 @@
   --animate-hop: hop 420ms ease-out;
   --animate-toast-in: toast-in 220ms ease-out;
 
+  /* 404 scene (ChefSearching) -- all looping, all used with motion-safe: */
+  --animate-steam: steam 2.4s ease-out infinite;
+  --animate-peek: peek 3.2s ease-in-out infinite;
+  --animate-magnify: magnify 3.2s ease-in-out infinite;
+  --animate-noodle: noodle 2.8s ease-in-out infinite;
+  --animate-wonder: wonder 3.2s ease-in-out infinite;
+
   @keyframes pop {
     0% { transform: scale(1); }
     45% { transform: scale(1.35); }
@@ -39,9 +46,59 @@
     65% { transform: translateY(0) rotate(4deg); }
   }
 
+  /* A puff rises, grows and fades out */
+  @keyframes steam {
+    0% { transform: translateY(0) scale(0.6); opacity: 0; }
+    20% { opacity: 0.7; }
+    100% { transform: translateY(-46px) scale(1.6); opacity: 0; }
+  }
+
+  /* The chef looks left ... and right ... */
+  @keyframes peek {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-10px) rotate(-6deg); }
+    60% { transform: translateX(6px) rotate(5deg); }
+  }
+
+  /* ... while the magnifier sweeps across the scene */
+  @keyframes magnify {
+    0%, 100% { transform: translate(0, 0) rotate(0); }
+    25% { transform: translate(-26px, -6px) rotate(-12deg); }
+    60% { transform: translate(8px, 4px) rotate(10deg); }
+  }
+
+  /* A noodle slowly slips over the rim of the bowl and back */
+  @keyframes noodle {
+    0%, 100% { transform: scaleY(0.55); }
+    50% { transform: scaleY(1.1); }
+  }
+
+  /* The "?" pops up above the chef now and then */
+  @keyframes wonder {
+    0%, 35%, 100% { transform: translateY(4px) scale(0.6); opacity: 0; }
+    45%, 80% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
   @keyframes toast-in {
     from { opacity: 0; transform: translateY(12px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+/* `hit-area`: grows the CLICKABLE area of a small control to at least 44x44px
+   (Apple HIG / WCAG 2.5.5) without changing how it looks -- an invisible
+   ::after centered on the element. The element must be positioned
+   (`relative`, or already `absolute`). Keep ~44px between neighbours so the
+   invisible areas don't overlap. */
+@utility hit-area {
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
   }
 }
 

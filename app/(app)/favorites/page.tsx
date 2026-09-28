@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import EmptyState from "@/app/components/EmptyState";
 import FavoritesGrid from "@/app/components/FavoritesGrid";
 import { filtersKey, parseFilterParams, type RawSearchParams } from "@/app/components/recipe-filters/filterParams";
+import { withNext } from "@/lib/auth/safeNext";
 import { auth } from "@/lib/auth/server";
 import { getMyFavoriteIds } from "@/lib/favorites";
 import { getAllRecipes } from "@/lib/recipe";
@@ -31,8 +32,8 @@ export default async function FavoritesPage({ searchParams }: { searchParams: Pr
           emoji="💜"
           title="Sign in to unlock this"
           text="Favorites and your shopping list live in your account — saved on every device."
-          primary={{ label: "Sign in", href: "/auth/sign-in" }}
-          secondary={{ label: "Create account", href: "/auth/sign-up" }}
+          primary={{ label: "Sign in", href: withNext("/auth/sign-in", "/favorites") }}
+          secondary={{ label: "Create account", href: withNext("/auth/sign-up", "/favorites") }}
         />
       )}
     </div>

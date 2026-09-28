@@ -30,7 +30,7 @@ export default function LabelsPanel({ categories, selected, onToggle }: LabelsPa
     <div className="flex flex-col gap-4">
       {groups.map((group) => (
         <fieldset key={group.name} className="flex flex-col gap-2">
-          <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+          <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-base-content/70">
             {group.name}
           </legend>
           <div className="flex flex-wrap gap-2">

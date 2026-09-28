@@ -24,7 +24,7 @@ export default function StatTiles({ recipe, initiallyFavorite }: { recipe: Recip
             <span className="text-xs text-base-content/70 sm:text-sm">{getDifficultyLabel(recipe.difficulty)}</span>
           </>
         ) : (
-          <span className="text-sm text-base-content/60">No difficulty yet</span>
+          <span className="text-sm text-base-content/70">No difficulty yet</span>
         )}
       </div>
 

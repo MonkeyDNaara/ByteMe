@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
 
 import { useToast } from "@/app/components/toast/ToastProvider";
-import { isOptimizableImageUrl, type Recipe } from "@/lib/recipe";
+import { currentPath, withNext } from "@/lib/auth/safeNext";
+import RecipeImage from "@/app/components/RecipeImage";
+import type { Recipe } from "@/lib/recipe";
 import { useFavorites } from "@/lib/useFavorites";
 
 type FinishScreenProps = {
@@ -20,7 +21,7 @@ export default function FinishScreen({ recipe, onBackToSteps, onBackToRecipe, on
 
   const saveToFavorites = () => {
     if (!isLoggedIn) {
-      showToast({ message: "Sign in to save your favorite recipes", action: { label: "Sign in", href: "/auth/sign-in" } });
+      showToast({ message: "Sign in to save your favorite recipes", action: { label: "Sign in", href: withNext("/auth/sign-in", currentPath()) } });
       return;
     }
     setFavoriteState(recipe.id, true);
@@ -30,13 +31,12 @@ export default function FinishScreen({ recipe, onBackToSteps, onBackToRecipe, on
   return (
     <section className="mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center gap-5 px-4 py-10 text-center sm:py-16">
       <div className="relative h-44 w-44 overflow-hidden rounded-full border-8 border-base-200 shadow-xl sm:h-56 sm:w-56">
-        <Image
+        <RecipeImage
           src={recipe.image_url}
           alt=""
-          fill
+          categories={recipe.categories}
           sizes="224px"
-          className="object-cover"
-          unoptimized={!isOptimizableImageUrl(recipe.image_url)}
+          emojiClassName="text-7xl"
         />
       </div>
       <span aria-hidden="true" className="text-5xl">
@@ -69,7 +69,7 @@ export default function FinishScreen({ recipe, onBackToSteps, onBackToRecipe, on
       <button type="button" onClick={onSurprise} className="font-semibold text-link hover:underline">
         🎲 Surprise me with the next one →
       </button>
-      <button type="button" onClick={onBackToSteps} className="text-sm text-base-content/60 hover:underline">
+      <button type="button" onClick={onBackToSteps} className="text-sm text-base-content/70 hover:underline">
         ← Back to the steps
       </button>
     </section>
